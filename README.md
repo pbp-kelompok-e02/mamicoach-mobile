@@ -40,8 +40,7 @@ Repositori ini berfokus pada **client Flutter** (Android, iOS, Web, Desktop) yan
 Struktur fitur di Flutter dibuat agar mirip dengan modularisasi di backend Django:
 
 ### 1. Authentication & User Management
-**PIC:** Natan Harum Panogu Silalahi  
-**Folder:** `lib/features/auth`
+Natan Harum Panogu Silalahi  
 
 **Fitur:**
 - Login/Logout/Registrasi menggunakan session cookie dari backend Django,
@@ -50,8 +49,7 @@ Struktur fitur di Flutter dibuat agar mirip dengan modularisasi di backend Djang
 - Integrasi dengan endpoint auth backend.
 
 ### 2. Class & Coach Management
-**PIC:** Kevin Cornellius Widjaja  
-**Folder:** `lib/features/class`
+Kevin Cornellius Widjaja  
 
 **Fitur:**
 - Menampilkan daftar kelas dengan filter dan search,
@@ -60,8 +58,7 @@ Struktur fitur di Flutter dibuat agar mirip dengan modularisasi di backend Djang
 - Integrasi dengan endpoint class backend.
 
 ### 3. Booking & Schedule
-**PIC:** Galih Nur Rizqy  
-**Folder:** `lib/features/booking`
+Galih Nur Rizqy  
 
 **Fitur:**
 - Form booking dengan pilihan tanggal dan jam,
@@ -70,8 +67,7 @@ Struktur fitur di Flutter dibuat agar mirip dengan modularisasi di backend Djang
 - Real-time availability dari coach.
 
 ### 4. Payment System
-**PIC:** Vincentius Filbert Amadeo  
-**Folder:** `lib/features/payment`
+Vincentius Filbert Amadeo  
 
 **Fitur:**
 - Integrasi payment gateway (Midtrans/Xendit),
@@ -80,8 +76,7 @@ Struktur fitur di Flutter dibuat agar mirip dengan modularisasi di backend Djang
 - Status pembayaran real-time.
 
 ### 5. Chat & Review
-**PIC:** Vincent Valentino Oei  
-**Folder:** `lib/features/chat`
+Vincent Valentino Oei  
 
 **Fitur:**
 - Real-time chat antara user dan coach,
