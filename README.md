@@ -1,5 +1,5 @@
 # MamiCoach Mobile
-
+[![Build Status](https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575/status.svg?token=c0bp-Q4qTMROXMeW85JwgA&branch=release)](https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575)
 > [!Note]
 > **Anggota Kelompok PBP E02**:
 > - Galih Nur Rizqy (2406343224)
