@@ -1,5 +1,7 @@
 # MamiCoach Mobile
 [![Build Status](https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575/status.svg?token=c0bp-Q4qTMROXMeW85JwgA&branch=release)](https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575)
+[![Quality Gate Status](https://sonarqube-sonarqube.tenex.cloud/api/project_badges/measure?project=pbp-kelompok-e02_mamicoach-mobile_eb07f6e9-478b-4f1f-85dd-0e3dbede1903&metric=alert_status&token=sqb_7182fd41238a2b334d9d43f1515c3b6d3b652625)](https://sonarqube-sonarqube.tenex.cloud/dashboard?id=pbp-kelompok-e02_mamicoach-mobile_eb07f6e9-478b-4f1f-85dd-0e3dbede1903)
+
 > [!Note]
 > **Anggota Kelompok PBP E02**:
 > - Galih Nur Rizqy (2406343224)
