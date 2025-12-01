@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:mamicoach_mobile/features/admin/providers/admin_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,11 +15,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (_) {
-        CookieRequest request = CookieRequest();
-        return request;
-      },
+    return MultiProvider(
+      providers: [
+        // CookieRequest provider for API calls
+        Provider<CookieRequest>(create: (_) => CookieRequest()),
+        // Admin providers
+        ChangeNotifierProvider(create: (_) => AdminAuthProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+      ],
       child: MaterialApp(
         title: 'MamiCoach',
         debugShowCheckedModeBanner: false,
