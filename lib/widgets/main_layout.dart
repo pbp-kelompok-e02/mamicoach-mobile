@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/classes_page.dart';
 import 'package:mamicoach_mobile/screens/home_page.dart';
+import 'package:mamicoach_mobile/screens/login_page.dart';
+import 'package:mamicoach_mobile/screens/register_page.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -185,7 +187,12 @@ class MainLayout extends StatelessWidget {
                   title: 'Masuk',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to login page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
                   },
                 ),
                 Padding(
@@ -193,7 +200,12 @@ class MainLayout extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      // TODO: Navigate to sign up page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
