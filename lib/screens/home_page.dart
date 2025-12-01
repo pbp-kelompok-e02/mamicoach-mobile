@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/classes_page.dart';
 import 'package:mamicoach_mobile/widgets/main_layout.dart';
+import 'package:mamicoach_mobile/features/admin/screens/admin_login_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -58,6 +59,34 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
+            const Spacer(),
+            // Admin access button - small and subtle at the bottom
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminLoginScreen(),
+                    ),
+                  );
+                },
+                icon: Icon(
+                  Icons.admin_panel_settings,
+                  size: 16,
+                  color: AppColors.grey,
+                ),
+                label: Text(
+                  'Admin Panel',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Quicksand',
+                    color: AppColors.grey,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
