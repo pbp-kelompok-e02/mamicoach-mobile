@@ -208,7 +208,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       try {
                         // Ganti dengan URL backend Anda
                         final response = await request.postJson(
-                          "http://127.0.0.1:8000/auth/register-user/",
+                          "http://127.0.0.1:8000/auth/api_register_user/",
                           jsonEncode({
                             'username': _usernameController.text,
                             'first_name': _firstNameController.text,

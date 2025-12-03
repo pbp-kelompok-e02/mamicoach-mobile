@@ -106,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                             try {
                               // Ganti dengan URL backend Anda
                               final response = await request.login(
-                                "http://127.0.0.1:8000/auth/login-flutter/",
+                                "http://127.0.0.1:8000/auth/api_login/",
                                 {
                                   'username': username,
                                   'password': password,

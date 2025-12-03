@@ -645,7 +645,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
 
                                 // Ganti dengan URL backend Anda
                                 final response = await request.postJson(
-                                  "http://127.0.0.1:8000/auth/register-coach/",
+                                  "http://127.0.0.1:8000/auth/api_register_coach/",
                                   jsonEncode(requestBody),
                                 );
 
