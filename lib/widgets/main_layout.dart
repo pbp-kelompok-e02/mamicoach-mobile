@@ -4,6 +4,7 @@ import 'package:mamicoach_mobile/screens/classes_page.dart';
 import 'package:mamicoach_mobile/screens/home_page.dart';
 import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
+import 'package:mamicoach_mobile/screens/coaches_list_page.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -159,7 +160,12 @@ class MainLayout extends StatelessWidget {
                   title: 'Cari Coach',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to coaches page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CoachesListPage(),
+                      ),
+                    );
                   },
                 ),
                 _buildDrawerItem(
