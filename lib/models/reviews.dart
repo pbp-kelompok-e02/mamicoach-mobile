@@ -5,6 +5,7 @@ class Review {
   final bool isAnonymous;
   final int bookingId;
   final int courseId;
+  final int? userId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -15,6 +16,7 @@ class Review {
     required this.isAnonymous,
     required this.bookingId,
     required this.courseId,
+    this.userId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +29,7 @@ class Review {
       isAnonymous: json['is_anonymous'] ?? false,
       bookingId: json['booking_id'],
       courseId: json['course_id'],
+      userId: json['user_id'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -40,6 +43,7 @@ class Review {
       'is_anonymous': isAnonymous,
       'booking_id': bookingId,
       'course_id': courseId,
+      if (userId != null) 'user_id': userId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

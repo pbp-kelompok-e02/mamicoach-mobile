@@ -3,6 +3,9 @@ import 'package:mamicoach_mobile/models/reviews.dart';
 import 'package:mamicoach_mobile/widgets/review_card.dart';
 import 'package:mamicoach_mobile/widgets/review_card_styled.dart';
 import 'package:mamicoach_mobile/screens/review_form_screen.dart';
+import 'package:mamicoach_mobile/services/review_service.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class ReviewShowcaseScreen extends StatefulWidget {
   const ReviewShowcaseScreen({Key? key}) : super(key: key);
@@ -30,6 +33,7 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
         isAnonymous: false,
         bookingId: 100,
         courseId: 5,
+        userId: 1,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
         updatedAt: DateTime.now().subtract(const Duration(days: 1)),
       ),
@@ -41,6 +45,7 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
         isAnonymous: true,
         bookingId: 101,
         courseId: 6,
+        userId: 2,
         createdAt: DateTime.now().subtract(const Duration(days: 5)),
         updatedAt: DateTime.now().subtract(const Duration(days: 5)),
       ),
@@ -52,6 +57,7 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
         isAnonymous: false,
         bookingId: 102,
         courseId: 7,
+        userId: 1,
         createdAt: DateTime.now().subtract(const Duration(days: 10)),
         updatedAt: DateTime.now().subtract(const Duration(days: 10)),
       ),
@@ -63,10 +69,17 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
         isAnonymous: true,
         bookingId: 103,
         courseId: 5,
+        userId: 3,
         createdAt: DateTime.now().subtract(const Duration(days: 15)),
         updatedAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
     ];
+  }
+
+  bool _isReviewAuthor(Review review) {
+    // Mock user ID for demo - in real app, get from CookieRequest
+    const int mockCurrentUserId = 1;
+    return review.userId == mockCurrentUserId;
   }
 
   Future<void> _handleEditReview(Review review) async {
@@ -107,17 +120,63 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
     }
   }
 
-  void _handleDeleteReview(Review review) {
-    setState(() {
-      reviews.removeWhere((r) => r.id == review.id);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Review #${review.id} deleted'),
-        backgroundColor: const Color(0xFFDC2626),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  Future<void> _handleDeleteReview(Review review) async {
+    try {
+      // Get CookieRequest from provider
+      final request = context.read<CookieRequest>();
+
+      if (!request.loggedIn) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You must be logged in to delete a review'),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // Call API to delete review
+      final result = await ReviewService.deleteReview(
+        reviewId: review.id,
+        request: request,
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        // Remove from local list
+        setState(() {
+          reviews.removeWhere((r) => r.id == review.id);
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Review deleted successfully'),
+            backgroundColor: const Color(0xFFDC2626),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to delete review'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting review: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _handleCreateReview() async {
@@ -187,11 +246,12 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
                 reviews.length,
                 (index) {
                   final review = reviews[index];
+                  final isAuthor = _isReviewAuthor(review);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: ReviewCard(
                       review: review,
-                      isAuthor: true,
+                      isAuthor: isAuthor,
                       onEdit: () => _handleEditReview(review),
                       onDelete: () => _handleDeleteReview(review),
                     ),
@@ -206,13 +266,14 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
                 reviews.length,
                 (index) {
                   final review = reviews[index];
+                  final isAuthor = _isReviewAuthor(review);
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: GestureDetector(
-                      onTap: () => _showReviewActionsSheet(context, review),
+                      onTap: () => isAuthor ? _showReviewActionsSheet(context, review) : null,
                       child: ReviewCardStyled(
                         review: review,
-                        isAuthor: true,
+                        isAuthor: isAuthor,
                       ),
                     ),
                   );

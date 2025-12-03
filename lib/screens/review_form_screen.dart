@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/models/reviews.dart';
+import 'package:mamicoach_mobile/services/review_service.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class ReviewFormScreen extends StatefulWidget {
   final Review? review; // Null for create, populated for edit
@@ -54,31 +57,83 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
     });
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      // Get CookieRequest from provider
+      final request = context.read<CookieRequest>();
+
+      if (!request.loggedIn) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You must be logged in to submit a review'),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      Map<String, dynamic> result;
+
+      if (_isEditMode) {
+        // Edit existing review
+        result = await ReviewService.editReview(
+          reviewId: widget.review!.id,
+          rating: _rating,
+          content: _contentController.text.trim(),
+          isAnonymous: _isAnonymous,
+          request: request,
+        );
+      } else {
+        // Create new review
+        if (widget.bookingId == null) {
+          throw Exception('Booking ID is required for creating a review');
+        }
+        result = await ReviewService.createReview(
+          bookingId: widget.bookingId!,
+          rating: _rating,
+          content: _contentController.text.trim(),
+          isAnonymous: _isAnonymous,
+          request: request,
+        );
+      }
 
       if (!mounted) return;
 
-      // Create review object to return
-      final reviewData = {
-        'rating': _rating,
-        'content': _contentController.text.trim(),
-        'is_anonymous': _isAnonymous,
-        'booking_id': widget.bookingId ?? widget.review!.bookingId,
-        'course_id': widget.courseId ?? widget.review!.courseId,
-      };
+      if (result['success'] == true) {
+        // Create review object to return
+        final reviewData = {
+          'rating': _rating,
+          'content': _contentController.text.trim(),
+          'is_anonymous': _isAnonymous,
+          'booking_id': widget.bookingId ?? widget.review!.bookingId,
+          'course_id': widget.courseId ?? widget.review!.courseId,
+          'review_id': result['review_id'],
+        };
 
-      // Return the review data
-      Navigator.pop(context, reviewData);
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? (_isEditMode ? 'Review updated successfully' : 'Review created successfully')),
+            backgroundColor: const Color(0xFF35A753),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isEditMode ? 'Review updated successfully' : 'Review created successfully'),
-          backgroundColor: const Color(0xFF35A753),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+        // Return the review data
+        Navigator.pop(context, reviewData);
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to save review'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       
