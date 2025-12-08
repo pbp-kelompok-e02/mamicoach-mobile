@@ -218,6 +218,7 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review Showcase'),

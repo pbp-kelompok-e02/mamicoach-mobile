@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart';
 import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
 import 'package:mamicoach_mobile/widgets/custom_text_field.dart';
@@ -645,7 +646,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
 
                                 // Ganti dengan URL backend Anda
                                 final response = await request.postJson(
-                                  "http://127.0.0.1:8000/auth/api_register_coach/",
+                                  "${ApiConstants.baseUrl}/auth/api_register_coach/",
                                   jsonEncode(requestBody),
                                 );
 

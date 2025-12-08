@@ -10,11 +10,11 @@ class ReviewFormScreen extends StatefulWidget {
   final int? courseId; // Required for create mode
 
   const ReviewFormScreen({
-    Key? key,
+    super.key,
     this.review,
     this.bookingId,
     this.courseId,
-  }) : super(key: key);
+  });
 
   @override
   State<ReviewFormScreen> createState() => _ReviewFormScreenState();
@@ -155,6 +155,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

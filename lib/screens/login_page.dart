@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
 import 'package:mamicoach_mobile/screens/home_page.dart';
 import 'package:mamicoach_mobile/widgets/custom_text_field.dart';
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 // Logo
                 Image.asset(
-                  'assets/images/logo.png',
+                  'assets/imagxes/logo.png',
                   height: 100,
                   width: 100,
                 ),
@@ -104,9 +105,8 @@ class _LoginPageState extends State<LoginPage> {
                     }
 
                             try {
-                              // Ganti dengan URL backend Anda
                               final response = await request.login(
-                                "http://127.0.0.1:8000/auth/api_login/",
+                                "${ApiConstants.baseUrl}/auth/api_login/",
                                 {
                                   'username': username,
                                   'password': password,

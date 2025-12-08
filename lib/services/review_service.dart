@@ -5,7 +5,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class ReviewService {
   /// Create a new review for a booking
-  /// POST /reviews/ajax/create/<booking_id>/
+  /// POST /review/ajax/create/<booking_id>
   static Future<Map<String, dynamic>> createReview({
     required int bookingId,
     required int rating,
@@ -14,7 +14,7 @@ class ReviewService {
     required CookieRequest request,
   }) async {
     try {
-      final url = '${ApiConstants.baseUrl}/reviews/ajax/create/$bookingId/';
+      final url = '${ApiConstants.baseUrl}/review/ajax/create/$bookingId';
       
       final response = await request.postJson(
         url,
@@ -47,7 +47,7 @@ class ReviewService {
   }
 
   /// Edit an existing review
-  /// PUT /reviews/ajax/edit/<review_id>/
+  /// POST /review/ajax/edit/<review_id>
   static Future<Map<String, dynamic>> editReview({
     required int reviewId,
     required int rating,
@@ -56,7 +56,7 @@ class ReviewService {
     required CookieRequest request,
   }) async {
     try {
-      final url = '${ApiConstants.baseUrl}/reviews/ajax/edit/$reviewId/';
+      final url = '${ApiConstants.baseUrl}/review/ajax/edit/$reviewId';
       
       final response = await request.postJson(
         url,
@@ -88,13 +88,13 @@ class ReviewService {
   }
 
   /// Delete a review
-  /// DELETE /reviews/ajax/delete/<review_id>/
+  /// POST /review/ajax/delete/<review_id>
   static Future<Map<String, dynamic>> deleteReview({
     required int reviewId,
     required CookieRequest request,
   }) async {
     try {
-      final url = '${ApiConstants.baseUrl}/reviews/ajax/delete/$reviewId/';
+      final url = '${ApiConstants.baseUrl}/review/ajax/delete/$reviewId';
       
       final response = await request.post(url, {});
 
@@ -119,13 +119,13 @@ class ReviewService {
   }
 
   /// Get a specific review
-  /// GET /reviews/ajax/get/<review_id>/
+  /// GET /review/ajax/get/<review_id>
   static Future<Map<String, dynamic>> getReview({
     required int reviewId,
     required CookieRequest request,
   }) async {
     try {
-      final url = '${ApiConstants.baseUrl}/reviews/ajax/get/$reviewId/';
+      final url = '${ApiConstants.baseUrl}/review/ajax/get/$reviewId';
       
       final response = await request.get(url);
 
