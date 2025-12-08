@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/classes_page.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:mamicoach_mobile/screens/home_page.dart';
 import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
@@ -67,9 +69,32 @@ class MainLayout extends StatelessWidget {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle, color: AppColors.black),
-            onPressed: () {},
+          Builder(
+            builder: (context) {
+              final request = context.watch<CookieRequest>();
+              return Row(
+                children: [
+                  if (request.loggedIn) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        request.jsonData['username'] ?? 'User',
+                        style: const TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.black,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                  IconButton(
+                    icon: const Icon(Icons.account_circle, color: AppColors.black),
+                    onPressed: () {},
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
