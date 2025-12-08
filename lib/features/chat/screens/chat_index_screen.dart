@@ -51,6 +51,8 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
     }
 
     final request = context.read<CookieRequest>();
+    print('ZDEBUG: Is logged in: ${request.loggedIn}');
+    print('ZDEBUG: Cookies: ${request.cookies}');
     final result = await ChatService.getChatSessions(request: request);
 
     if (!mounted) return;
@@ -104,6 +106,7 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
