@@ -4,6 +4,7 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/splash_screen.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:mamicoach_mobile/features/admin/providers/admin_provider.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,8 @@ class MyApp extends StatelessWidget {
       providers: [
         // CookieRequest provider for API calls
         Provider<CookieRequest>(create: (_) => CookieRequest()),
+        // User provider
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         // Admin providers
         ChangeNotifierProvider(create: (_) => AdminAuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
