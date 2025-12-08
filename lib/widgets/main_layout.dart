@@ -5,6 +5,7 @@ import 'package:mamicoach_mobile/screens/home_page.dart';
 import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
 import 'package:mamicoach_mobile/screens/coaches_list_page.dart';
+import 'package:mamicoach_mobile/screens/my_courses_page.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -164,6 +165,21 @@ class MainLayout extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const CoachesListPage(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.school_outlined,
+                  title: 'Kelas Saya',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyCoursesPage(),
                       ),
                     );
                   },
