@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Primary Colors - Using MamiCoach Green
   static const Color primary = Color(0xFF35A753); // MamiCoach Primary Green
+  static const Color primaryGreen = primary; // Alias for backward compatibility
   static const Color primaryDark = Color(0xFF4A9B4A); // MamiCoach Dark Green
   static const Color primaryLight = Color(0xFF8FD68F); // MamiCoach Light Green
 

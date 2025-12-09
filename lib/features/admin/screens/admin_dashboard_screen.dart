@@ -117,7 +117,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now()),
+              DateFormat('EEEE, d MMMM yyyy', 'id').format(DateTime.now()),
               style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,

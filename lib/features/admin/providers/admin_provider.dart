@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/admin_user.dart';
 import '../models/dashboard_stats.dart';
-import '../../../core/constants/api_constants.dart';
+import '../services/admin_api_service.dart';
 
 /// Admin Authentication Provider for MamiCoach Admin Panel
+/// Uses JWT Bearer token authentication
 class AdminAuthProvider extends ChangeNotifier {
+  final AdminApiService _apiService = AdminApiService();
+  
   AdminUser? _currentUser;
   bool _isLoading = false;
   String? _error;
@@ -20,6 +22,7 @@ class AdminAuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isLoggedIn => _isLoggedIn;
+  bool get isAuthenticated => _apiService.isAuthenticated;
 
   /// Initialize provider - check if admin was previously logged in
   Future<void> initialize() async {
@@ -27,12 +30,23 @@ class AdminAuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Load tokens from storage
+      await _apiService.loadTokens();
+      
+      // Load user data from storage
       final prefs = await SharedPreferences.getInstance();
       final userData = prefs.getString('admin_user');
       
-      if (userData != null) {
+      if (userData != null && _apiService.isAuthenticated) {
         _currentUser = AdminUser.fromJson(jsonDecode(userData));
         _isLoggedIn = true;
+      } else if (_apiService.refreshToken != null) {
+        // Try to refresh token if we have a refresh token
+        final refreshed = await _apiService.refreshAccessToken();
+        if (refreshed && userData != null) {
+          _currentUser = AdminUser.fromJson(jsonDecode(userData));
+          _isLoggedIn = true;
+        }
       }
     } catch (e) {
       debugPrint('Error initializing admin auth: $e');
@@ -42,34 +56,27 @@ class AdminAuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Login admin user
+  /// Login admin user with JWT authentication
   Future<bool> login(String username, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminLogin}'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
-      );
+      final response = await _apiService.login(username, password);
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && (data['status'] == true || data['success'] == true)) {
+      if (response['status'] == true) {
+        final userData = response['data']['user'];
+        
         // Create admin user from response
         _currentUser = AdminUser(
-          id: data['user']?['id'] ?? 0,
-          username: data['user']?['username'] ?? username,
-          email: data['user']?['email'] ?? '',
-          isSuperuser: data['user']?['is_superuser'] ?? false,
+          id: userData['id'] ?? 0,
+          username: userData['username'] ?? username,
+          email: userData['email'] ?? '',
+          isSuperuser: userData['is_superuser'] ?? true,
         );
 
-        // Save to local storage
+        // Save user data to local storage
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('admin_user', jsonEncode(_currentUser!.toJson()));
 
@@ -78,30 +85,12 @@ class AdminAuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = data['message'] ?? 'Login gagal. Periksa username dan password.';
+        _error = response['message'] ?? 'Login gagal. Periksa username dan password.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      // Demo mode - allow login with demo credentials
-      if (username == 'admin' && password == 'admin123') {
-        _currentUser = AdminUser(
-          id: 1,
-          username: 'admin',
-          email: 'admin@mamicoach.com',
-          isSuperuser: true,
-        );
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('admin_user', jsonEncode(_currentUser!.toJson()));
-        
-        _isLoggedIn = true;
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-      
       _error = 'Terjadi kesalahan: ${e.toString()}';
       _isLoading = false;
       notifyListeners();
@@ -115,10 +104,7 @@ class AdminAuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await http.post(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminLogout}'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      await _apiService.logout();
     } catch (e) {
       debugPrint('Error during logout: $e');
     }
@@ -142,6 +128,8 @@ class AdminAuthProvider extends ChangeNotifier {
 
 /// Dashboard Provider for MamiCoach Admin Panel
 class DashboardProvider extends ChangeNotifier {
+  final AdminApiService _apiService = AdminApiService();
+  
   DashboardStats? _stats;
   bool _isLoading = false;
   String? _error;
@@ -153,30 +141,25 @@ class DashboardProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Fetch dashboard statistics
+  /// Fetch dashboard statistics from API
   Future<void> fetchDashboardStats() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.apiAdminDashboard}'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final response = await _apiService.getDashboardStats();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == true || data['success'] == true) {
-          _stats = DashboardStats.fromJson(data['data'] ?? data);
-        } else {
-          _stats = _getMockDashboardStats();
-        }
+      if (response['status'] == true) {
+        _stats = DashboardStats.fromApiResponse(response['data']);
       } else {
+        _error = response['message'];
+        // Use mock data when API fails
         _stats = _getMockDashboardStats();
       }
     } catch (e) {
       debugPrint('Error fetching dashboard stats: $e');
+      _error = e.toString();
       // Use mock data when API fails
       _stats = _getMockDashboardStats();
     }
@@ -188,13 +171,13 @@ class DashboardProvider extends ChangeNotifier {
   /// Get mock dashboard stats for demo
   DashboardStats _getMockDashboardStats() {
     return DashboardStats(
-      totalUsers: 1247,
-      totalCoaches: 48,
-      totalCourses: 156,
-      totalBookings: 3892,
-      pendingBookings: 23,
-      completedBookings: 3420,
-      totalRevenue: 45680000,
+      totalUsers: 150,
+      totalCoaches: 25,
+      totalCourses: 40,
+      totalBookings: 320,
+      pendingBookings: 15,
+      completedBookings: 230,
+      totalRevenue: 45000000,
       newUsersThisMonth: 89,
       bookingsTrend: [
         ChartData(label: 'Sen', value: 45),

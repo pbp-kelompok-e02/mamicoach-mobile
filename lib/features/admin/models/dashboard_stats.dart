@@ -66,6 +66,37 @@ class DashboardStats {
       topCategories: [],
     );
   }
+
+  /// Create DashboardStats from API response format
+  /// API returns: { overview, bookings, payments, recent_bookings, recent_payments }
+  factory DashboardStats.fromApiResponse(Map<String, dynamic> data) {
+    final overview = data['overview'] as Map<String, dynamic>? ?? {};
+    final bookings = data['bookings'] as Map<String, dynamic>? ?? {};
+    final payments = data['payments'] as Map<String, dynamic>? ?? {};
+    
+    return DashboardStats(
+      totalUsers: overview['total_users'] ?? 0,
+      totalCoaches: overview['total_coaches'] ?? 0,
+      totalCourses: overview['total_courses'] ?? 0,
+      totalBookings: bookings['total'] ?? overview['total_bookings'] ?? 0,
+      pendingBookings: bookings['pending'] ?? overview['pending_bookings'] ?? 0,
+      completedBookings: bookings['completed'] ?? overview['completed_bookings'] ?? 0,
+      totalRevenue: (payments['total_revenue'] ?? overview['total_revenue'] ?? 0).toDouble(),
+      newUsersThisMonth: overview['new_users_this_month'] ?? 0,
+      bookingsTrend: (data['bookings_trend'] as List<dynamic>?)
+              ?.map((e) => ChartData.fromJson(e))
+              .toList() ??
+          [],
+      revenueTrend: (data['revenue_trend'] as List<dynamic>?)
+              ?.map((e) => ChartData.fromJson(e))
+              .toList() ??
+          [],
+      topCategories: (data['top_categories'] as List<dynamic>?)
+              ?.map((e) => CategoryStats.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class ChartData {
