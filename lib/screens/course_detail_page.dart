@@ -5,6 +5,7 @@ import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -507,9 +508,9 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   }
 
   Widget _buildActionButtons(CourseDetail course, CookieRequest request) {
-    // Check if current user is the coach (you'll need to implement auth check)
-    // For now, we'll show both buttons side by side for coaches
-    final isOwner = request.loggedIn; // Replace with actual ownership check
+    // Check if current user is the coach
+    final userProvider = context.watch<UserProvider>();
+    final isOwner = userProvider.username == course.coach.username;
 
     if (isOwner) {
       // Show Edit and Delete buttons for course owner

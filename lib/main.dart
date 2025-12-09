@@ -5,9 +5,10 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/splash_screen.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:mamicoach_mobile/features/admin/providers/admin_provider.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:mamicoach_mobile/features/admin/providers/booking_provider.dart' as booking_p;
 import 'package:mamicoach_mobile/features/admin/providers/payment_provider.dart' as payment_p;
-import 'package:mamicoach_mobile/features/admin/providers/user_provider.dart';
+import 'package:mamicoach_mobile/features/admin/providers/user_provider.dart' as admin_user_p;
 import 'package:mamicoach_mobile/features/admin/providers/coach_provider.dart';
 
 void main() async {
@@ -25,12 +26,14 @@ class MyApp extends StatelessWidget {
       providers: [
         // CookieRequest provider for API calls
         Provider<CookieRequest>(create: (_) => CookieRequest()),
+        // User provider
+        ChangeNotifierProvider(create: (_) => UserProvider()),
         // Admin providers
         ChangeNotifierProvider(create: (_) => AdminAuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => booking_p.BookingProvider()),
         ChangeNotifierProvider(create: (_) => payment_p.PaymentProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => admin_user_p.UserProvider()),
         ChangeNotifierProvider(create: (_) => CoachProvider()),
       ],
       child: MaterialApp(

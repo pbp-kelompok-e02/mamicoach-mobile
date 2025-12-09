@@ -7,6 +7,7 @@ import 'package:mamicoach_mobile/widgets/custom_text_field.dart';
 import 'package:mamicoach_mobile/widgets/custom_password_field.dart';
 import 'package:mamicoach_mobile/widgets/custom_button.dart';
 import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -36,13 +37,9 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo
-                Image.asset(
-                  'assets/imagxes/logo.png',
-                  height: 100,
-                  width: 100,
-                ),
+                Image.asset('assets/imagxes/logo.png', height: 100, width: 100),
                 const SizedBox(height: 24),
-                
+
                 // Title
                 const Text(
                   'Masuk ke MamiCoach',
@@ -104,54 +101,57 @@ class _LoginPageState extends State<LoginPage> {
                       return;
                     }
 
-                            try {
-                              final response = await request.login(
-                                "${ApiConstants.baseUrl}/auth/api_login/",
-                                {
-                                  'username': username,
-                                  'password': password,
-                                },
-                              );
+                    try {
+                      final response = await request.login(
+                        "${ApiConstants.baseUrl}/auth/api_login/",
+                        {'username': username, 'password': password},
+                      );
 
-                              setState(() {
-                                _isLoading = false;
-                              });
+                      setState(() {
+                        _isLoading = false;
+                      });
 
-                              if (context.mounted) {
-                                if (response['status'] == true) {
-                                  String message = response['message'];
-                                  
-                                  SnackBarHelper.showSuccessSnackBar(
-                                    context,
-                                    '$message Selamat datang, ${response['username']}!',
-                                  );
+                      if (context.mounted) {
+                        if (response['status'] == true) {
+                          String message = response['message'];
 
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const HomePage(),
-                                    ),
-                                  );
-                                } else {
-                                  SnackBarHelper.showErrorSnackBar(
-                                    context,
-                                    response['message'] ?? 'Login gagal!',
-                                  );
-                                }
-                              }
-                            } catch (e) {
-                              setState(() {
-                                _isLoading = false;
-                              });
-                              
-                              if (context.mounted) {
-                                SnackBarHelper.showErrorSnackBar(
-                                  context,
-                                  'Terjadi kesalahan: $e',
-                                );
-                              }
-                            }
-                          },
+                          // Store username in provider
+                          Provider.of<UserProvider>(
+                            context,
+                            listen: false,
+                          ).setUsername(response['username']);
+
+                          SnackBarHelper.showSuccessSnackBar(
+                            context,
+                            '$message Selamat datang, ${response['username']}!',
+                          );
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomePage(),
+                            ),
+                          );
+                        } else {
+                          SnackBarHelper.showErrorSnackBar(
+                            context,
+                            response['message'] ?? 'Login gagal!',
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+
+                      if (context.mounted) {
+                        SnackBarHelper.showErrorSnackBar(
+                          context,
+                          'Terjadi kesalahan: $e',
+                        );
+                      }
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -194,7 +194,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  
   @override
   void dispose() {
     _usernameController.dispose();
