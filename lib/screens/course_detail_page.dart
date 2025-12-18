@@ -6,6 +6,8 @@ import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
+import 'package:mamicoach_mobile/screens/booking_form_page.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -580,10 +582,19 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
 
     // Show booking button for other users
     return FloatingActionButton.extended(
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fitur booking akan segera hadir!')),
+      onPressed: () async {
+        // Navigate to BookingFormPage
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingFormPage(course: course),
+          ),
         );
+        
+        // Refresh page if booking was successful
+        if (result == true && mounted) {
+          setState(() {});
+        }
       },
       backgroundColor: AppColors.primaryGreen,
       label: const Text(

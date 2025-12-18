@@ -4,6 +4,7 @@ import 'package:mamicoach_mobile/widgets/main_layout.dart';
 import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
+import 'package:mamicoach_mobile/screens/schedule_management_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
@@ -118,6 +119,41 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
 
             return Column(
               children: [
+                // Schedule Management Button
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ScheduleManagementPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.calendar_today),
+                      label: const Text(
+                        'Atur Ketersediaan Saya',
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
