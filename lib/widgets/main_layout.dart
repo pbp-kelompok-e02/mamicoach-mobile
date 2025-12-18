@@ -10,6 +10,7 @@ import 'package:mamicoach_mobile/screens/coaches_list_page.dart';
 import 'package:mamicoach_mobile/screens/my_courses_page.dart';
 import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
 import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -121,229 +122,243 @@ class MainLayout extends StatelessWidget {
   }
 
   Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          // Drawer Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryGreen, AppColors.darkGreen],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Image.asset('assets/images/logo.png', height: 60, width: 60),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'mamicoach',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Quicksand',
-                      color: Colors.white,
-                    ),
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        return Drawer(
+          child: Column(
+            children: [
+              // Drawer Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryGreen, AppColors.darkGreen],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Temukan Coach Terbaik Anda',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Quicksand',
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Menu Items
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.home,
-                  title: 'Beranda',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
-                  },
                 ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.school,
-                  title: 'Cari Kelas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ClassesPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.person_search,
-                  title: 'Cari Coach',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CoachesListPage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.school_outlined,
-                  title: 'Kelas Saya',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyCoursesPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.verified,
-                  title: 'Bergabung Jadi Coach',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to become coach page
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.library_books,
-                  title: 'Pembelajaran Saya',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyBookingsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.schedule,
-                  title: 'Booking Masuk (Coach)',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CoachBookingsPage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.login,
-                  title: 'Masuk',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                    );
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Image.asset('assets/images/logo.png', height: 60, width: 60),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'mamicoach',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Quicksand',
+                          color: Colors.white,
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    child: const Text(
-                      'Mulai Sekarang',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Temukan Coach Terbaik Anda',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Quicksand',
+                          color: Colors.white70,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                const Divider(),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.settings,
-                  title: 'Pengaturan',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to settings page
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.help_outline,
-                  title: 'Bantuan & Dukungan',
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to help page
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // Footer
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Version 1.0.0',
-              style: TextStyle(
-                fontSize: 12,
-                fontFamily: 'Quicksand',
-                color: AppColors.grey,
               ),
-              textAlign: TextAlign.center,
-            ),
+
+              // Menu Items
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.home,
+                      title: 'Beranda',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const HomePage()),
+                        );
+                      },
+                    ),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.school,
+                      title: 'Cari Kelas',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ClassesPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.person_search,
+                      title: 'Cari Coach',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CoachesListPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(),
+                    
+                    // Show "Kelas Saya" only for coaches
+                    if (userProvider.isCoach)
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.school_outlined,
+                        title: 'Kelas Saya',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyCoursesPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    
+                    // Show "Booking Masuk" only for coaches
+                    if (userProvider.isCoach)
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.calendar_today,
+                        title: 'Booking Masuk',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CoachBookingsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    
+                    // Show "Pembelajaran Saya" only for regular users (non-coaches)
+                    if (!userProvider.isCoach)
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.library_books,
+                        title: 'Pembelajaran Saya',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyBookingsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.verified,
+                      title: 'Bergabung Jadi Coach',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to become coach page
+                      },
+                    ),
+                    const Divider(),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.login,
+                      title: 'Masuk',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Mulai Sekarang',
+                          style: TextStyle(
+                            fontFamily: 'Quicksand',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Divider(),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.settings,
+                      title: 'Pengaturan',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to settings page
+                      },
+                    ),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.help_outline,
+                      title: 'Bantuan & Dukungan',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navigate to help page
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Footer
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Version 1.0.0',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Quicksand',
+                    color: AppColors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

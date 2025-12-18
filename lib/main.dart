@@ -17,8 +17,22 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Load user data from SharedPreferences on app start
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProvider>(context, listen: false).loadUser();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

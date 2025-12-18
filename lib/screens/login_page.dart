@@ -115,11 +115,15 @@ class _LoginPageState extends State<LoginPage> {
                         if (response['status'] == true) {
                           String message = response['message'];
 
-                          // Store username in provider
-                          Provider.of<UserProvider>(
+                          // Store username and isCoach in provider
+                          final userProvider = Provider.of<UserProvider>(
                             context,
                             listen: false,
-                          ).setUsername(response['username']);
+                          );
+                          userProvider.setUser(
+                            response['username'],
+                            response['is_coach'] ?? false,
+                          );
 
                           SnackBarHelper.showSuccessSnackBar(
                             context,
