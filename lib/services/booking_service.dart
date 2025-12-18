@@ -174,7 +174,10 @@ class BookingService {
         {},
       );
       
-      return response;
+      if (response['success'] == true) {
+        return response;
+      }
+      throw Exception(response['message'] ?? 'Failed to cancel booking');
     } catch (e) {
       throw Exception('Error canceling booking: $e');
     }
@@ -199,7 +202,7 @@ class BookingService {
   }
 
   /// Update booking status (coach only)
-  /// Maps to Django: /booking/api/booking/<booking_id>/update-status/
+  /// Maps to Django: /booking/api/booking/<booking_id>/status/
   static Future<Map<String, dynamic>> updateBookingStatus(
     CookieRequest request,
     int bookingId,
@@ -207,11 +210,14 @@ class BookingService {
   ) async {
     try {
       final response = await request.post(
-        '${api_constants.baseUrl}/booking/api/booking/$bookingId/update-status/',
+        '${api_constants.baseUrl}/booking/api/booking/$bookingId/status/',
         {'status': status},
       );
       
-      return response;
+      if (response['success'] == true) {
+        return response;
+      }
+      throw Exception(response['message'] ?? 'Failed to update booking status');
     } catch (e) {
       throw Exception('Error updating booking status: $e');
     }

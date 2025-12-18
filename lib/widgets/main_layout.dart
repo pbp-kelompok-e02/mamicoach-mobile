@@ -8,6 +8,8 @@ import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/screens/register_page.dart';
 import 'package:mamicoach_mobile/screens/coaches_list_page.dart';
 import 'package:mamicoach_mobile/screens/my_courses_page.dart';
+import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
+import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -237,7 +239,26 @@ class MainLayout extends StatelessWidget {
                   title: 'Pembelajaran Saya',
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to my learning page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyBookingsPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.schedule,
+                  title: 'Booking Masuk (Coach)',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CoachBookingsPage(),
+                      ),
+                    );
                   },
                 ),
                 const Divider(),
