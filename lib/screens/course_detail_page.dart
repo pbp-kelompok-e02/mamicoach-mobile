@@ -4,7 +4,8 @@ import 'package:mamicoach_mobile/models/course_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -498,7 +499,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 200,
+                  height: 240,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: course.relatedCourses.length,

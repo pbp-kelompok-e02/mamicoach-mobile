@@ -6,7 +6,8 @@ import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/models/coach.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -71,220 +72,218 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final request = context.watch<CookieRequest>();
 
     return MainLayout(
-      child: Column(
-        children: [
-          // Category Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryGreen, AppColors.darkGreen],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              children: [
-                if (widget.category.thumbnailUrl != null)
-                  Container(
-                    width: 120,
-                    height: 120,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(13),
-                      child: ProxyNetworkImage(
-                        widget.category.thumbnailUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context) => Container(
-                          color: Colors.white.withOpacity(0.2),
-                          child: Icon(
-                            Icons.category,
-                            size: 48,
-                            color: Colors.white,
-                          ),
+      child: NestedScrollView(
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            SliverToBoxAdapter(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryGreen, AppColors.darkGreen],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    if (widget.category.thumbnailUrl != null)
+                      Container(
+                        width: 120,
+                        height: 120,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white, width: 3),
                         ),
-                        errorWidget: (context, error) => Container(
-                          color: Colors.white.withOpacity(0.2),
-                          child: Icon(
-                            Icons.category,
-                            size: 48,
-                            color: Colors.white,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(13),
+                          child: ProxyNetworkImage(
+                            widget.category.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context) => Container(
+                              color: Colors.white.withOpacity(0.2),
+                              child: Icon(
+                                Icons.category,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            ),
+                            errorWidget: (context, error) => Container(
+                              color: Colors.white.withOpacity(0.2),
+                              child: Icon(
+                                Icons.category,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
+                    Text(
+                      widget.category.name,
+                      style: const TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                Text(
-                  widget.category.name,
-                  style: const TextStyle(
+                    const SizedBox(height: 8),
+                    if (widget.category.description != null)
+                      Text(
+                        widget.category.description!,
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${widget.category.courseCount} Kelas Tersedia',
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPersistentHeader(
+              delegate: _SliverAppBarDelegate(
+                TabBar(
+                  controller: _tabController,
+                  labelColor: AppColors.primaryGreen,
+                  unselectedLabelColor: AppColors.darkGrey,
+                  indicatorColor: AppColors.primaryGreen,
+                  labelStyle: const TextStyle(
                     fontFamily: 'Quicksand',
-                    fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontSize: 16,
                   ),
-                ),
-                const SizedBox(height: 8),
-                if (widget.category.description != null)
-                  Text(
-                    widget.category.description!,
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                const SizedBox(height: 16),
-                Text(
-                  '${widget.category.courseCount} Kelas Tersedia',
-                  style: TextStyle(
+                  unselectedLabelStyle: const TextStyle(
                     fontFamily: 'Quicksand',
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
                     fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
+                  tabs: const [
+                    Tab(text: 'Kelas'),
+                    Tab(text: 'Coach'),
+                  ],
                 ),
-              ],
-            ),
-          ),
-
-          // Tabs
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primaryGreen,
-              unselectedLabelColor: AppColors.darkGrey,
-              indicatorColor: AppColors.primaryGreen,
-              labelStyle: const TextStyle(
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-              tabs: const [
-                Tab(text: 'Kelas'),
-                Tab(text: 'Coach'),
-              ],
+              pinned: true,
             ),
-          ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Courses Tab
+            FutureBuilder<List<Course>>(
+              future: fetchCoursesByCategory(request),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryGreen,
+                    ),
+                  );
+                }
 
-          // Tab Views
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Courses Tab
-                FutureBuilder<List<Course>>(
-                  future: fetchCoursesByCategory(request),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryGreen,
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.school_outlined,
+                          size: 64,
+                          color: AppColors.darkGrey,
                         ),
-                      );
-                    }
-
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.school_outlined,
-                              size: 64,
-                              color: AppColors.darkGrey,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Belum ada kelas untuk kategori ini',
-                              style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontSize: 16,
-                                color: AppColors.darkGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return _buildCourseCard(snapshot.data![index]);
-                      },
-                    );
-                  },
-                ),
-
-                // Coaches Tab
-                FutureBuilder<List<Coach>>(
-                  future: fetchCoachesByCategory(request),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryGreen,
-                        ),
-                      );
-                    }
-
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_search,
-                              size: 64,
-                              color: AppColors.darkGrey,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Belum ada coach untuk kategori ini',
-                              style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontSize: 16,
-                                color: AppColors.darkGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.75,
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada kelas untuk kategori ini',
+                          style: TextStyle(
+                            fontFamily: 'Quicksand',
+                            fontSize: 16,
+                            color: AppColors.darkGrey,
                           ),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return _buildCoachCard(snapshot.data![index]);
-                      },
-                    );
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return _buildCourseCard(snapshot.data![index]);
                   },
-                ),
-              ],
+                );
+              },
             ),
-          ),
-        ],
+
+            // Coaches Tab
+            FutureBuilder<List<Coach>>(
+              future: fetchCoachesByCategory(request),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryGreen,
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_search,
+                          size: 64,
+                          color: AppColors.darkGrey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada coach untuk kategori ini',
+                          style: TextStyle(
+                            fontFamily: 'Quicksand',
+                            fontSize: 16,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return _buildCoachCard(snapshot.data![index]);
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -609,5 +608,30 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         ),
       ),
     );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: Colors.white, child: _tabBar);
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

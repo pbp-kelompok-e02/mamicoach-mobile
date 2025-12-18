@@ -64,6 +64,16 @@ class MainLayout extends StatelessWidget {
                       vertical: 12,
                     ),
                   ),
+                  onSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ClassesPage(searchQuery: value),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ),
             ),
@@ -90,7 +100,10 @@ class MainLayout extends StatelessWidget {
                     ),
                   ],
                   IconButton(
-                    icon: const Icon(Icons.account_circle, color: AppColors.black),
+                    icon: const Icon(
+                      Icons.account_circle,
+                      color: AppColors.black,
+                    ),
                     onPressed: () {},
                   ),
                 ],
