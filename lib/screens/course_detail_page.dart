@@ -4,7 +4,7 @@ import 'package:mamicoach_mobile/models/course_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -21,7 +21,7 @@ class CourseDetailPage extends StatefulWidget {
 class _CourseDetailPageState extends State<CourseDetailPage> {
   Future<CourseDetail> fetchCourseDetail(CookieRequest request) async {
     final response = await request.get(
-      '${Environment.baseUrl}/api/courses/${widget.courseId}/',
+      '${api_constants.baseUrl}/api/courses/${widget.courseId}/',
     );
     return CourseDetail.fromJson(response['data']);
   }
@@ -69,7 +69,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     if (confirmed == true && mounted) {
       try {
         final response = await request.post(
-          '${Environment.baseUrl}/api/courses/${widget.courseId}/delete/',
+          '${api_constants.baseUrl}/api/courses/${widget.courseId}/delete/',
           {},
         );
 

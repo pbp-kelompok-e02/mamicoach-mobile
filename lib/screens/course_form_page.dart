@@ -5,7 +5,7 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/models/course_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -77,7 +77,7 @@ class _CourseFormPageState extends State<CourseFormPage> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        '${Environment.baseUrl}/api/categories/',
+        '${api_constants.baseUrl}/api/categories/',
       );
       if (response['success'] == true && response['data'] is List) {
         setState(() {
@@ -342,8 +342,8 @@ class _CourseFormPageState extends State<CourseFormPage> {
                               final courseId =
                                   widget.courseDetail?.id ?? widget.course?.id;
                               final url = isEdit
-                                  ? '${Environment.baseUrl}/api/courses/$courseId/edit/'
-                                  : '${Environment.baseUrl}/api/courses/create/';
+                                  ? '${api_constants.baseUrl}/api/courses/$courseId/edit/'
+                                  : '${api_constants.baseUrl}/api/courses/create/';
 
                               final data = {
                                 "category_id": _selectedCategoryId,
@@ -356,12 +356,7 @@ class _CourseFormPageState extends State<CourseFormPage> {
                               };
 
                               try {
-                                final response = isEdit
-                                    ? await request.postJson(
-                                        url,
-                                        jsonEncode(data),
-                                      )
-                                    : await request.postJson(
+                                final response = await request.postJson(
                                         url,
                                         jsonEncode(data),
                                       );

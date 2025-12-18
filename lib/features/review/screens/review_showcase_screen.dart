@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mamicoach_mobile/models/reviews.dart';
-import 'package:mamicoach_mobile/widgets/review_card.dart';
-import 'package:mamicoach_mobile/widgets/review_card_styled.dart';
-import 'package:mamicoach_mobile/screens/review_form_screen.dart';
-import 'package:mamicoach_mobile/services/review_service.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart';
+import 'package:mamicoach_mobile/features/review/models/reviews.dart';
+import 'package:mamicoach_mobile/features/review/screens/review_form_screen.dart';
+import 'package:mamicoach_mobile/features/review/services/review_service.dart';
+import 'package:mamicoach_mobile/features/review/widgets/review_card.dart';
+import 'package:mamicoach_mobile/features/review/widgets/review_card_styled.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -15,71 +16,97 @@ class ReviewShowcaseScreen extends StatefulWidget {
 }
 
 class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
-  late List<Review> reviews;
+  List<Review> reviews = [];
+  bool _isLoading = false;
+  String? _error;
+  bool _didLoad = false;
+  final Map<int, String> _courseTitleById = {};
 
   @override
   void initState() {
     super.initState();
-    _initializeMockReviews();
   }
 
-  void _initializeMockReviews() {
-    reviews = [
-      Review(
-        id: 1,
-        rating: 5,
-        content:
-            'Excellent coaching session! Jane is very professional and understands child psychology well. She provided practical tips that I can implement at home. Highly recommended for parents looking for expert guidance.',
-        isAnonymous: false,
-        bookingId: 100,
-        courseId: 5,
-        userId: 1,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      Review(
-        id: 2,
-        rating: 4,
-        content:
-            'Great experience overall. The session was informative and the coach was very attentive to my questions. Would have appreciated more personalized exercises, but still very helpful.',
-        isAnonymous: true,
-        bookingId: 101,
-        courseId: 6,
-        userId: 2,
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Review(
-        id: 3,
-        rating: 5,
-        content:
-            'Amazing! I felt heard and understood throughout the entire session. The coach provided valuable insights and created an action plan that is easy to follow. Looking forward to booking another session.',
-        isAnonymous: false,
-        bookingId: 102,
-        courseId: 7,
-        userId: 1,
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      Review(
-        id: 4,
-        rating: 3,
-        content:
-            'Good session but could be better. The coach was knowledgeable but sometimes lost focus during the discussion. Overall satisfactory.',
-        isAnonymous: true,
-        bookingId: 103,
-        courseId: 5,
-        userId: 3,
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 15)),
-      ),
-    ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoad) return;
+    _didLoad = true;
+    _loadMyReviews();
+  }
+
+  int? _currentUserId(CookieRequest request) {
+    final dynamic raw = request.jsonData['user_id'];
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw);
+    return null;
+  }
+
+  Future<void> _loadMyReviews() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final request = context.read<CookieRequest>();
+    if (!request.loggedIn) {
+      setState(() {
+        reviews = [];
+        _isLoading = false;
+        _error = 'You must be logged in to view your reviews.';
+      });
+      return;
+    }
+
+    final result = await ReviewService.listMyReviews(request: request);
+    if (!mounted) return;
+
+    if (result['success'] == true) {
+      final loadedReviews = (result['reviews'] as List<Review>);
+      await _primeCourseTitles(request, loadedReviews);
+
+      if (!mounted) return;
+      setState(() {
+        reviews = loadedReviews;
+        _isLoading = false;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        reviews = [];
+        _isLoading = false;
+        _error = result['error']?.toString() ?? 'Failed to fetch reviews';
+      });
+    }
+  }
+
+  Future<void> _primeCourseTitles(CookieRequest request, List<Review> loaded) async {
+    final courseIds = loaded.map((r) => r.courseId).toSet();
+    final missing = courseIds.where((id) => !_courseTitleById.containsKey(id)).toList();
+    if (missing.isEmpty) return;
+
+    // Fetch course titles in parallel (best-effort; failures are ignored).
+    await Future.wait(missing.map((courseId) async {
+      try {
+        final resp = await request.get(
+          '${ApiConstants.baseUrl}/api/courses/$courseId/',
+        );
+        final data = resp is Map<String, dynamic> ? (resp['data'] as Map<String, dynamic>?) : null;
+        final title = data?['title']?.toString();
+        if (title != null && title.trim().isNotEmpty) {
+          _courseTitleById[courseId] = title.trim();
+        }
+      } catch (_) {
+        // ignore
+      }
+    }));
   }
 
   bool _isReviewAuthor(Review review) {
-    // Mock user ID for demo - in real app, get from CookieRequest
-    const int mockCurrentUserId = 1;
-    return review.userId == mockCurrentUserId;
+    final request = context.read<CookieRequest>();
+    final currentUserId = _currentUserId(request);
+    if (currentUserId == null || review.userId == null) return false;
+    return review.userId == currentUserId;
   }
 
   Future<void> _handleEditReview(Review review) async {
@@ -93,30 +120,7 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
     );
 
     if (result != null && mounted) {
-      // Update the review in the list
-      setState(() {
-        final index = reviews.indexWhere((r) => r.id == review.id);
-        if (index != -1) {
-          reviews[index] = Review(
-            id: review.id,
-            rating: result['rating'],
-            content: result['content'],
-            isAnonymous: result['is_anonymous'],
-            bookingId: result['booking_id'],
-            courseId: result['course_id'],
-            createdAt: review.createdAt,
-            updatedAt: DateTime.now(),
-          );
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Review updated successfully'),
-          backgroundColor: Color(0xFF35A753),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      await _loadMyReviews();
     }
   }
 
@@ -146,11 +150,8 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
-        // Remove from local list
-        setState(() {
-          reviews.removeWhere((r) => r.id == review.id);
-        });
-        
+        await _loadMyReviews();
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Review deleted successfully'),
@@ -191,34 +192,15 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
     );
 
     if (result != null && mounted) {
-      // Add new review to the list
-      setState(() {
-        final newReview = Review(
-          id: reviews.isEmpty ? 1 : reviews.map((r) => r.id).reduce((a, b) => a > b ? a : b) + 1,
-          rating: result['rating'],
-          content: result['content'],
-          isAnonymous: result['is_anonymous'],
-          bookingId: result['booking_id'],
-          courseId: result['course_id'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        reviews.insert(0, newReview);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Review created successfully'),
-          backgroundColor: Color(0xFF35A753),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      await _loadMyReviews();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
+    final request = context.read<CookieRequest>();
+    final authorName = request.jsonData['username']?.toString();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review Showcase'),
@@ -240,6 +222,35 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_isLoading) ...[
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ] else if (_error != null) ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48),
+                    child: Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Color(0xFFDC2626)),
+                    ),
+                  ),
+                ),
+              ] else if (reviews.isEmpty) ...[
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Text(
+                      'No reviews yet.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ] else ...[
               // Standard Review Cards Section
               _buildSectionHeader('Standard Review Cards'),
               const SizedBox(height: 16),
@@ -248,11 +259,14 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
                 (index) {
                   final review = reviews[index];
                   final isAuthor = _isReviewAuthor(review);
+                  final courseTitle = _courseTitleById[review.courseId];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: ReviewCard(
                       review: review,
                       isAuthor: isAuthor,
+                      authorName: authorName,
+                      courseTitle: courseTitle,
                       onEdit: () => _handleEditReview(review),
                       onDelete: () => _handleDeleteReview(review),
                     ),
@@ -268,18 +282,23 @@ class _ReviewShowcaseScreenState extends State<ReviewShowcaseScreen> {
                 (index) {
                   final review = reviews[index];
                   final isAuthor = _isReviewAuthor(review);
+                  final courseTitle = _courseTitleById[review.courseId];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: GestureDetector(
-                      onTap: () => isAuthor ? _showReviewActionsSheet(context, review) : null,
+                      onTap: () =>
+                          isAuthor ? _showReviewActionsSheet(context, review) : null,
                       child: ReviewCardStyled(
                         review: review,
                         isAuthor: isAuthor,
+                        authorName: authorName,
+                        courseTitle: courseTitle,
                       ),
                     ),
                   );
                 },
               ),
+              ],
             ],
           ),
         ),

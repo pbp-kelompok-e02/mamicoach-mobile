@@ -4,7 +4,7 @@ import 'package:mamicoach_mobile/widgets/main_layout.dart';
 import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -19,7 +19,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
   int _currentPage = 1;
 
   Future<Map<String, dynamic>> fetchMyCourses(CookieRequest request) async {
-    String url = '${Environment.baseUrl}/api/my-courses/?page=$_currentPage';
+    String url = '${api_constants.baseUrl}/api/my-courses/?page=$_currentPage';
 
     try {
       final response = await request.get(url);

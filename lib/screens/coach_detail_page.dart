@@ -3,7 +3,7 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/coach_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -19,7 +19,7 @@ class CoachDetailPage extends StatefulWidget {
 class _CoachDetailPageState extends State<CoachDetailPage> {
   Future<CoachDetail> fetchCoachDetail(CookieRequest request) async {
     final response = await request.get(
-      '${Environment.baseUrl}/api/coach/${widget.coachId}/',
+      '${api_constants.baseUrl}/api/coach/${widget.coachId}/',
     );
     return CoachDetail.fromJson(response['data']);
   }

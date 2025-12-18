@@ -4,6 +4,7 @@ import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 class ChatInputBox extends StatefulWidget {
   final Function(String) onSend;
   final VoidCallback? onAttachment;
+  final bool hasPendingAttachments;
   final ChatMessage? replyTo;
   final VoidCallback? onClearReply;
 
@@ -11,6 +12,7 @@ class ChatInputBox extends StatefulWidget {
     super.key,
     required this.onSend,
     this.onAttachment,
+    this.hasPendingAttachments = false,
     this.replyTo,
     this.onClearReply,
   });
@@ -30,6 +32,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   }
 
   @override
+  void didUpdateWidget(covariant ChatInputBox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hasPendingAttachments != widget.hasPendingAttachments) {
+      _updateSendButton();
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -37,13 +47,13 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
   void _updateSendButton() {
     setState(() {
-      _canSend = _controller.text.trim().isNotEmpty;
+      _canSend = _controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
     });
   }
 
   void _handleSend() {
     final text = _controller.text.trim();
-    if (text.isNotEmpty) {
+    if (text.isNotEmpty || widget.hasPendingAttachments) {
       widget.onSend(text);
       _controller.clear();
       setState(() {

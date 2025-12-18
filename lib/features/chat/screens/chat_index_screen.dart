@@ -51,8 +51,6 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
     }
 
     final request = context.read<CookieRequest>();
-    print('ZDEBUG: Is logged in: ${request.loggedIn}');
-    print('ZDEBUG: Cookies: ${request.cookies}');
     final result = await ChatService.getChatSessions(request: request);
 
     if (!mounted) return;

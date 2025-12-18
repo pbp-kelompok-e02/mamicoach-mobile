@@ -6,7 +6,7 @@ import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/models/coach.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -37,7 +37,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   Future<List<Course>> fetchCoursesByCategory(CookieRequest request) async {
     final response = await request.get(
-      '${Environment.baseUrl}/api/courses/?category=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
+      '${api_constants.baseUrl}/api/courses/?category=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
     );
 
     if (response['success'] == true) {
@@ -52,7 +52,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   Future<List<Coach>> fetchCoachesByCategory(CookieRequest request) async {
     final response = await request.get(
-      '${Environment.baseUrl}/api/coaches/?expertise=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
+      '${api_constants.baseUrl}/api/coaches/?expertise=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
     );
 
     if (response['success'] == true) {

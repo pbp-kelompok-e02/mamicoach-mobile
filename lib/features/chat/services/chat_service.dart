@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
+import 'package:mamicoach_mobile/core/network/http_client_factory.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -204,37 +205,41 @@ class ChatService {
   static Future<Map<String, dynamic>> uploadFileAttachment({
     required String sessionId,
     required int messageId,
-    required String filePath,
     required String fileName,
+    required Uint8List bytes,
     String type = 'file',
     required CookieRequest request,
   }) async {
+    http.Client? client;
     try {
       final url = '${ApiConstants.baseUrl}/chat/api/$sessionId/upload/';
-      final file = File(filePath);
-      
-      if (!await file.exists()) {
-        return {'success': false, 'error': 'File does not exist'};
-      }
-
-      final fileSize = await file.length();
-      if (fileSize > 10 * 1024 * 1024) {
+      if (bytes.length > 10 * 1024 * 1024) {
         return {'success': false, 'error': 'File size exceeds 10MB limit'};
       }
 
       final req = http.MultipartRequest('POST', Uri.parse(url));
-      req.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      // CookieRequest already maintains the correct cookie header.
+      // `request.cookies` is Map<String, Cookie> (NOT String values), so serializing it
+      // creates an invalid header like `sessionid=Instance of 'Cookie'`.
+      final cookieHeader = request.headers['cookie'] ?? request.headers['Cookie'];
+      if (cookieHeader != null && cookieHeader.isNotEmpty) {
+        req.headers['cookie'] = cookieHeader;
+      }
+
+      client = createHttpClient();
+
+      req.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: fileName,
+        ),
+      );
       req.fields['message_id'] = messageId.toString();
       req.fields['type'] = type;
 
-      final cookies = request.cookies;
-      if (cookies.isNotEmpty) {
-        req.headers['Cookie'] = cookies.entries
-            .map((e) => '${e.key}=${e.value}')
-            .join('; ');
-      }
-
-      final streamedResponse = await req.send();
+      final streamedResponse = await client.send(req);
       final response = await http.Response.fromStream(streamedResponse);
       final jsonResponse = jsonDecode(response.body);
 
@@ -252,6 +257,8 @@ class ChatService {
       };
     } catch (e) {
       return {'success': false, 'error': 'Upload error: ${e.toString()}'};
+    } finally {
+      client?.close();
     }
   }
 }

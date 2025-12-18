@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mamicoach_mobile/models/reviews.dart';
-import 'package:mamicoach_mobile/services/review_service.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart';
+import 'package:mamicoach_mobile/features/review/models/reviews.dart';
+import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -23,10 +24,15 @@ class ReviewFormScreen extends StatefulWidget {
 class _ReviewFormScreenState extends State<ReviewFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _contentController = TextEditingController();
-  
+
   int _rating = 5;
   bool _isAnonymous = false;
   bool _isLoading = false;
+
+  bool _didLoadCourse = false;
+  bool _isLoadingCourse = false;
+  String? _courseTitle;
+  String? _courseThumbnailUrl;
 
   @override
   void initState() {
@@ -40,12 +46,92 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadCourse) return;
+    _didLoadCourse = true;
+    _loadCourseInfo();
+  }
+
+  @override
   void dispose() {
     _contentController.dispose();
     super.dispose();
   }
 
   bool get _isEditMode => widget.review != null;
+
+  int? get _courseId => widget.courseId ?? widget.review?.courseId;
+
+  Future<void> _loadCourseInfo() async {
+    final courseId = _courseId;
+    if (courseId == null) return;
+
+    setState(() {
+      _isLoadingCourse = true;
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final resp = await request.get('${ApiConstants.baseUrl}/api/courses/$courseId/');
+      if (resp is Map<String, dynamic> && resp['success'] == true) {
+        final data = resp['data'];
+        if (data is Map<String, dynamic>) {
+          final title = data['title']?.toString();
+          final thumb = data['thumbnail_url']?.toString();
+          if (mounted) {
+            setState(() {
+              _courseTitle = title;
+              _courseThumbnailUrl = (thumb != null && thumb.trim().isNotEmpty)
+                  ? thumb.trim()
+                  : null;
+            });
+          }
+        }
+      }
+    } catch (_) {
+      // Best-effort only.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCourse = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildCourseImageFallback() {
+    return Container(
+      color: const Color(0xFFF3F4F6),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(
+            Icons.image_outlined,
+            size: 64,
+            color: Color(0xFF9CA3AF),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Course Image',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Will be displayed here',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _saveReview() async {
     if (!_formKey.currentState!.validate()) {
@@ -116,7 +202,12 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? (_isEditMode ? 'Review updated successfully' : 'Review created successfully')),
+            content: Text(
+              result['message'] ??
+                  (_isEditMode
+                      ? 'Review updated successfully'
+                      : 'Review created successfully'),
+            ),
             backgroundColor: const Color(0xFF35A753),
             behavior: SnackBarBehavior.floating,
           ),
@@ -136,7 +227,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save review: $e'),
@@ -155,7 +246,6 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -179,7 +269,7 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Course Image Placeholder
+            // Course Image (thumbnail_url)
             Container(
               height: 200,
               decoration: BoxDecoration(
@@ -187,32 +277,56 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.image_outlined,
-                    size: 64,
-                    color: const Color(0xFF9CA3AF),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Course Image',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Will be displayed here',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: const Color(0xFF9CA3AF),
-                    ),
-                  ),
-                ],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_courseThumbnailUrl != null)
+                      Image.network(
+                        _courseThumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildCourseImageFallback();
+                        },
+                      )
+                    else
+                      _buildCourseImageFallback(),
+                    if (_isLoadingCourse)
+                      Container(
+                        color: Colors.black.withOpacity(0.15),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(strokeWidth: 3),
+                        ),
+                      ),
+                    if (_courseTitle != null && _courseTitle!.trim().isNotEmpty)
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            _courseTitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -250,7 +364,9 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(
-                            starValue <= _rating ? Icons.star : Icons.star_border,
+                            starValue <= _rating
+                                ? Icons.star
+                                : Icons.star_border,
                             size: 40,
                             color: starValue <= _rating
                                 ? const Color(0xFFFBBF24)
@@ -305,7 +421,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF35A753), width: 2),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF35A753), width: 2),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -313,7 +430,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFDC2626), width: 2),
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),
@@ -403,7 +521,8 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : Text(

@@ -1,9 +1,50 @@
 import 'dart:convert';
+
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
-import 'package:mamicoach_mobile/models/reviews.dart';
+import 'package:mamicoach_mobile/features/review/models/reviews.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class ReviewService {
+  /// List current user's reviews
+  /// GET /review/ajax/list-my/?course_id=&booking_id=
+  static Future<Map<String, dynamic>> listMyReviews({
+    required CookieRequest request,
+    int? courseId,
+    int? bookingId,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/review/ajax/list-my/').replace(
+        queryParameters: {
+          if (courseId != null) 'course_id': courseId.toString(),
+          if (bookingId != null) 'booking_id': bookingId.toString(),
+        },
+      );
+
+      final response = await request.get(uri.toString());
+
+      if (response['success'] == true) {
+        final rawReviews = (response['reviews'] as List?) ?? const [];
+        return {
+          'success': true,
+          'reviews': rawReviews
+              .whereType<Map<String, dynamic>>()
+              .map((r) => Review.fromJson(r))
+              .toList(),
+        };
+      }
+
+      return {
+        'success': false,
+        'error': response['error'] ?? 'Failed to fetch reviews',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
   /// Create a new review for a booking
   /// POST /review/ajax/create/<booking_id>
   static Future<Map<String, dynamic>> createReview({
@@ -15,7 +56,7 @@ class ReviewService {
   }) async {
     try {
       final url = '${ApiConstants.baseUrl}/review/ajax/create/$bookingId';
-      
+
       final response = await request.postJson(
         url,
         jsonEncode({
@@ -35,7 +76,9 @@ class ReviewService {
       } else {
         return {
           'success': false,
-          'error': response['error'] ?? response['errors']?.toString() ?? 'Failed to create review',
+          'error': response['error'] ??
+              response['errors']?.toString() ??
+              'Failed to create review',
         };
       }
     } catch (e) {
@@ -57,7 +100,7 @@ class ReviewService {
   }) async {
     try {
       final url = '${ApiConstants.baseUrl}/review/ajax/edit/$reviewId';
-      
+
       final response = await request.postJson(
         url,
         jsonEncode({
@@ -76,7 +119,9 @@ class ReviewService {
       } else {
         return {
           'success': false,
-          'error': response['error'] ?? response['errors']?.toString() ?? 'Failed to update review',
+          'error': response['error'] ??
+              response['errors']?.toString() ??
+              'Failed to update review',
         };
       }
     } catch (e) {
@@ -95,7 +140,7 @@ class ReviewService {
   }) async {
     try {
       final url = '${ApiConstants.baseUrl}/review/ajax/delete/$reviewId';
-      
+
       final response = await request.post(url, {});
 
       if (response['success'] == true) {
@@ -126,7 +171,7 @@ class ReviewService {
   }) async {
     try {
       final url = '${ApiConstants.baseUrl}/review/ajax/get/$reviewId';
-      
+
       final response = await request.get(url);
 
       if (response['success'] == true) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/features/chat/screens/chat_index_screen.dart';
-import 'package:mamicoach_mobile/screens/review_showcase_screen.dart';
+import 'package:mamicoach_mobile/features/review/screens/review_showcase_screen.dart';
 
 class DemoScreen extends StatelessWidget {
   const DemoScreen({super.key});

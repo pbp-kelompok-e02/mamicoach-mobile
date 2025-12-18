@@ -1,3 +1,9 @@
+/// Base URL for API requests.
+///
+/// Prefer importing this library as `api_constants` and using
+/// `api_constants.baseUrl`.
+const String baseUrl = ApiConstants.baseUrl;
+
 /// API Constants for MamiCoach Admin Panel
 class ApiConstants {
   // Base URL - Change this to your production URL when deploying

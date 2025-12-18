@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mamicoach_mobile/models/reviews.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/features/review/models/reviews.dart';
 
 class ReviewCard extends StatelessWidget {
   final Review review;
@@ -8,6 +8,8 @@ class ReviewCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final String? authorAvatarUrl;
+  final String? authorName;
+  final String? courseTitle;
 
   const ReviewCard({
     super.key,
@@ -16,10 +18,19 @@ class ReviewCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.authorAvatarUrl,
+    this.authorName,
+    this.courseTitle,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayName = review.isAnonymous
+        ? 'Anonymous User'
+        : (authorName?.trim().isNotEmpty == true ? authorName!.trim() : 'User');
+    final displayCourseTitle = (courseTitle?.trim().isNotEmpty == true)
+      ? courseTitle!.trim()
+      : 'Course #${review.courseId}';
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -47,22 +58,22 @@ class ReviewCard extends StatelessWidget {
               children: [
                 // Avatar
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.grey.shade300,
-                    image: authorAvatarUrl != null
+                    image: (!review.isAnonymous && authorAvatarUrl != null)
                         ? DecorationImage(
                             image: NetworkImage(authorAvatarUrl!),
                             fit: BoxFit.cover,
                           )
                         : null,
                   ),
-                  child: authorAvatarUrl == null
+                  child: (review.isAnonymous || authorAvatarUrl == null)
                       ? Icon(
                           Icons.person,
-                          size: 32,
+                          size: 28,
                           color: Colors.grey.shade600,
                         )
                       : null,
@@ -74,16 +85,17 @@ class ReviewCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        review.isAnonymous ? 'Anonymous User' : 'User',
+                        displayName,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF1F2937),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Course ID: ${review.courseId}',
+                        displayCourseTitle,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,

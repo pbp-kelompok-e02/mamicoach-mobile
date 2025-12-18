@@ -4,7 +4,7 @@ import 'package:mamicoach_mobile/models/coach.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/widgets/main_layout.dart';
 import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
-import 'package:mamicoach_mobile/config/environment.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -33,7 +33,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        '${Environment.baseUrl}/api/categories/',
+        '${api_constants.baseUrl}/api/categories/',
       );
       if (response['success'] == true && response['data'] is List) {
         setState(() {
@@ -49,7 +49,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
 
   Future<Map<String, dynamic>> fetchCoaches(CookieRequest request) async {
     // Build query parameters
-    String url = '${Environment.baseUrl}/api/coaches/?page=$_currentPage';
+    String url = '${api_constants.baseUrl}/api/coaches/?page=$_currentPage';
 
     if (_searchController.text.isNotEmpty) {
       url += '&search=${Uri.encodeComponent(_searchController.text)}';
