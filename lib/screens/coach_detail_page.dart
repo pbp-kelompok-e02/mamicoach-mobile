@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/coach_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
@@ -99,16 +100,14 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
                         ),
                         child: ClipOval(
                           child: coach.profileImageUrl != null
-                              ? Image.network(
-                                  coach.profileImageUrl!,
+                              ? ProxyNetworkImage(
+                                  coach.profileImageUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: AppColors.darkGrey,
-                                    );
-                                  },
+                                  placeholder: (context) => Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: AppColors.darkGrey,
+                                  ),
                                 )
                               : Icon(
                                   Icons.person,
@@ -400,16 +399,19 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
                 child: course.thumbnailUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
+                        child: ProxyNetworkImage(
                           course.thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.school,
-                              color: AppColors.darkGrey,
-                              size: 32,
-                            );
-                          },
+                          placeholder: (context) => Icon(
+                            Icons.school,
+                            color: AppColors.darkGrey,
+                            size: 32,
+                          ),
+                          errorWidget: (context, error) => Icon(
+                            Icons.school,
+                            color: AppColors.darkGrey,
+                            size: 32,
+                          ),
                         ),
                       )
                     : Icon(Icons.school, color: AppColors.darkGrey, size: 32),

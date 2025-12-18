@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -147,16 +148,14 @@ class ChatBubble extends StatelessWidget {
         margin: const EdgeInsets.only(top: 4),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            attachment.fileUrl!,
+          child: ProxyNetworkImage(
+            attachment.fileUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                padding: const EdgeInsets.all(8),
-                color: Colors.grey[300],
-                child: const Icon(Icons.broken_image),
-              );
-            },
+            placeholder: (context) => Container(
+              padding: const EdgeInsets.all(8),
+              color: Colors.grey,
+              child: const Icon(Icons.broken_image),
+            ),
           ),
         ),
       );

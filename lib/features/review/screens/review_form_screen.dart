@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/features/review/models/reviews.dart';
 import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -283,12 +284,10 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
                   fit: StackFit.expand,
                   children: [
                     if (_courseThumbnailUrl != null)
-                      Image.network(
-                        _courseThumbnailUrl!,
+                      ProxyNetworkImage(
+                        _courseThumbnailUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildCourseImageFallback();
-                        },
+                        placeholder: (context) => _buildCourseImageFallback(),
                       )
                     else
                       _buildCourseImageFallback(),

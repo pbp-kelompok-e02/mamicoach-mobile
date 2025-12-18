@@ -5,6 +5,7 @@ import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -155,21 +156,29 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                       backgroundColor: AppColors.primaryGreen,
                       flexibleSpace: FlexibleSpaceBar(
                         background: snapshot.data!.thumbnailUrl != null
-                            ? Image.network(
+                            ? ProxyNetworkImage(
                                 snapshot.data!.thumbnailUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: AppColors.lightGrey,
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.school,
-                                        size: 80,
-                                        color: AppColors.darkGrey,
-                                      ),
+                                placeholder: (context) => Container(
+                                  color: AppColors.lightGrey,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.school,
+                                      size: 80,
+                                      color: AppColors.darkGrey,
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
+                                errorWidget: (context, error) => Container(
+                                  color: AppColors.lightGrey,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.school,
+                                      size: 80,
+                                      color: AppColors.darkGrey,
+                                    ),
+                                  ),
+                                ),
                               )
                             : Container(
                                 color: AppColors.lightGrey,
@@ -338,16 +347,19 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                     ),
                     child: course.coach.profileImageUrl != null
                         ? ClipOval(
-                            child: Image.network(
+                            child: ProxyNetworkImage(
                               course.coach.profileImageUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.person,
-                                  size: 30,
-                                  color: AppColors.darkGrey,
-                                );
-                              },
+                              placeholder: (context) => Icon(
+                                Icons.person,
+                                size: 30,
+                                color: AppColors.darkGrey,
+                              ),
+                              errorWidget: (context, error) => Icon(
+                                Icons.person,
+                                size: 30,
+                                color: AppColors.darkGrey,
+                              ),
                             ),
                           )
                         : Icon(
@@ -618,19 +630,24 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(12),
                         ),
-                        child: Image.network(
+                        child: ProxyNetworkImage(
                           course.thumbnailUrl!,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Center(
-                              child: Icon(
-                                Icons.school,
-                                color: AppColors.darkGrey,
-                                size: 32,
-                              ),
-                            );
-                          },
+                          placeholder: (context) => Center(
+                            child: Icon(
+                              Icons.school,
+                              color: AppColors.darkGrey,
+                              size: 32,
+                            ),
+                          ),
+                          errorWidget: (context, error) => Center(
+                            child: Icon(
+                              Icons.school,
+                              color: AppColors.darkGrey,
+                              size: 32,
+                            ),
+                          ),
                         ),
                       )
                     : Center(

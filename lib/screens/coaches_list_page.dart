@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/coach.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
@@ -426,19 +427,24 @@ class _CoachesListPageState extends State<CoachesListPage> {
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(12),
                           ),
-                          child: Image.network(
+                          child: ProxyNetworkImage(
                             coach.profileImageUrl!,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Icon(
-                                  Icons.person,
-                                  size: 48,
-                                  color: AppColors.darkGrey,
-                                ),
-                              );
-                            },
+                            placeholder: (context) => Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
+                            errorWidget: (context, error) => Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
                           ),
                         )
                       : Center(

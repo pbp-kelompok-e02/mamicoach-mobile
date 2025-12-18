@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/features/review/models/reviews.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 
 class ReviewCard extends StatelessWidget {
   final Review review;
@@ -64,8 +65,8 @@ class ReviewCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.grey.shade300,
                     image: (!review.isAnonymous && authorAvatarUrl != null)
-                        ? DecorationImage(
-                            image: NetworkImage(authorAvatarUrl!),
+                          ? DecorationImage(
+                              image: proxyNetworkImageProvider(authorAvatarUrl!),
                             fit: BoxFit.cover,
                           )
                         : null,
@@ -133,7 +134,7 @@ class ReviewCard extends StatelessWidget {
             Text(
               review.content,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: Color(0xFF374151),
                 height: 1.6,
               ),

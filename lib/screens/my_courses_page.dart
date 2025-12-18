@@ -5,6 +5,7 @@ import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -213,19 +214,24 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      child: Image.network(
+                      child: ProxyNetworkImage(
                         course.thumbnailUrl!,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 48,
-                              color: AppColors.darkGrey,
-                            ),
-                          );
-                        },
+                        placeholder: (context) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                        errorWidget: (context, error) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
                       ),
                     )
                   : Center(

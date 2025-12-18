@@ -7,6 +7,7 @@ import 'package:mamicoach_mobile/models/coach.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -96,19 +97,25 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(13),
-                      child: Image.network(
+                      child: ProxyNetworkImage(
                         widget.category.thumbnailUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white.withOpacity(0.2),
-                            child: Icon(
-                              Icons.category,
-                              size: 48,
-                              color: Colors.white,
-                            ),
-                          );
-                        },
+                        placeholder: (context) => Container(
+                          color: Colors.white.withOpacity(0.2),
+                          child: Icon(
+                            Icons.category,
+                            size: 48,
+                            color: Colors.white,
+                          ),
+                        ),
+                        errorWidget: (context, error) => Container(
+                          color: Colors.white.withOpacity(0.2),
+                          child: Icon(
+                            Icons.category,
+                            size: 48,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -314,19 +321,24 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      child: Image.network(
+                      child: ProxyNetworkImage(
                         course.thumbnailUrl!,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 48,
-                              color: AppColors.darkGrey,
-                            ),
-                          );
-                        },
+                        placeholder: (context) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                        errorWidget: (context, error) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
                       ),
                     )
                   : Center(
@@ -477,19 +489,24 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(12),
                           ),
-                          child: Image.network(
+                          child: ProxyNetworkImage(
                             coach.profileImageUrl!,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Icon(
-                                  Icons.person,
-                                  size: 48,
-                                  color: AppColors.darkGrey,
-                                ),
-                              );
-                            },
+                            placeholder: (context) => Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
+                            errorWidget: (context, error) => Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 48,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
                           ),
                         )
                       : Center(

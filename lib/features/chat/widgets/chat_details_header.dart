@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 
 class ChatDetailsHeader extends StatelessWidget {
   final ChatUser otherUser;
@@ -40,8 +41,8 @@ class ChatDetailsHeader extends StatelessWidget {
             CircleAvatar(
               radius: 20,
               backgroundColor: Theme.of(context).primaryColor,
-              backgroundImage: otherUser.profileImageUrl != null
-                  ? NetworkImage(otherUser.profileImageUrl!)
+                     backgroundImage: otherUser.profileImageUrl != null
+                       ? proxyNetworkImageProvider(otherUser.profileImageUrl!)
                   : null,
               child: otherUser.profileImageUrl == null
                   ? Text(

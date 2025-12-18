@@ -6,6 +6,7 @@ import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -232,18 +233,19 @@ class _ClassesPageState extends State<ClassesPage> {
                                     child:
                                         (category.thumbnailUrl?.isNotEmpty ??
                                             false)
-                                        ? Image.network(
+                                        ? ProxyNetworkImage(
                                             category.thumbnailUrl!,
                                             fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return Icon(
-                                                    Icons.category,
-                                                    color:
-                                                        AppColors.primaryGreen,
-                                                    size: 32,
-                                                  );
-                                                },
+                                            placeholder: (context) => Icon(
+                                              Icons.category,
+                                              color: AppColors.primaryGreen,
+                                              size: 32,
+                                            ),
+                                            errorWidget: (context, error) => Icon(
+                                              Icons.category,
+                                              color: AppColors.primaryGreen,
+                                              size: 32,
+                                            ),
                                           )
                                         : Icon(
                                             Icons.category,
@@ -629,19 +631,24 @@ class _ClassesPageState extends State<ClassesPage> {
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12),
                       ),
-                      child: Image.network(
+                      child: ProxyNetworkImage(
                         course.thumbnailUrl!,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 48,
-                              color: AppColors.darkGrey,
-                            ),
-                          );
-                        },
+                        placeholder: (context) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
+                        errorWidget: (context, error) => Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 48,
+                            color: AppColors.darkGrey,
+                          ),
+                        ),
                       ),
                     )
                   : Center(

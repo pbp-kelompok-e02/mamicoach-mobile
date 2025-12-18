@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -231,7 +232,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
-              backgroundImage: user.avatar != null ? NetworkImage(user.avatar!) : null,
+                backgroundImage: user.avatar != null ? proxyNetworkImageProvider(user.avatar!) : null,
               child: user.avatar == null
                   ? Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',

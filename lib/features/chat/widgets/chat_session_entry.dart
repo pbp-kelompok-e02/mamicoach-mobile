@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
+import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 
 class ChatSessionEntry extends StatelessWidget {
   final ChatSession session;
@@ -35,7 +36,7 @@ class ChatSessionEntry extends StatelessWidget {
                   radius: 28,
                   backgroundColor: Theme.of(context).primaryColor,
                   backgroundImage: otherUser.profileImageUrl != null
-                      ? NetworkImage(otherUser.profileImageUrl!)
+                    ? proxyNetworkImageProvider(otherUser.profileImageUrl!)
                       : null,
                   child: otherUser.profileImageUrl == null
                       ? Text(

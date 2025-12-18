@@ -50,6 +50,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   bool _isLoading = true;
   bool _isSending = false;
+  bool _didInitialOpenActions = false;
   Timer? _pollingTimer;
   ChatMessage? _replyToMessage;
 
@@ -107,7 +108,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _isLoading = false;
       });
 
-      if (!silent) {
+      // Always run the initial open behavior once, even if the first
+      // successful load comes from the polling path.
+      if (!_didInitialOpenActions) {
+        _didInitialOpenActions = true;
+        _scrollToBottom(animated: false);
+        _markMessagesAsRead();
+      } else if (!silent) {
         _scrollToBottom();
         _markMessagesAsRead();
       }
@@ -409,14 +416,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool animated = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        final target = _scrollController.position.maxScrollExtent;
+        if (animated) {
+          _scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(target);
+        }
       }
     });
   }
