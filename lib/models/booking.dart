@@ -4,6 +4,7 @@ class Booking {
   final int courseId;
   final int coachId;
   final String courseTitle;
+  final String userName;
   final String coachName;
   final DateTime startDatetime;
   final DateTime endDatetime;
@@ -17,6 +18,7 @@ class Booking {
     required this.courseId,
     required this.coachId,
     required this.courseTitle,
+    required this.userName,
     required this.coachName,
     required this.startDatetime,
     required this.endDatetime,
@@ -32,6 +34,7 @@ class Booking {
       courseId: json['course_id'],
       coachId: json['coach_id'],
       courseTitle: json['course_title'],
+      userName: json['user_name'] ?? '',
       coachName: json['coach_name'],
       startDatetime: DateTime.parse(json['start_datetime']),
       endDatetime: DateTime.parse(json['end_datetime']),

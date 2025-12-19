@@ -12,6 +12,10 @@ import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
 import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:mamicoach_mobile/features/chat/screens/chat_index_screen.dart';
+import 'package:mamicoach_mobile/screens/register_coach_page.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart';
+import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
+import 'package:mamicoach_mobile/screens/profile_page.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -106,8 +110,10 @@ class _MainLayoutState extends State<MainLayout> {
                               color: AppColors.grey,
                               fontSize: 14,
                             ),
-                            prefixIcon:
-                                const Icon(Icons.search, color: AppColors.grey),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: AppColors.grey,
+                            ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -122,7 +128,8 @@ class _MainLayoutState extends State<MainLayout> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ClassesPage(searchQuery: query),
+                                builder: (context) =>
+                                    ClassesPage(searchQuery: query),
                               ),
                             );
                           },
@@ -146,25 +153,176 @@ class _MainLayoutState extends State<MainLayout> {
                     onPressed: _toggleSearch,
                   ),
                   if (!_isSearching) ...[
-                    if (request.loggedIn)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          request.jsonData['username'] ?? 'User',
-                          style: const TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.black,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.account_circle,
-                        color: AppColors.black,
-                      ),
-                      onPressed: () {},
+                    // Connected User Info (Username + Avatar) or Login Icon
+                    Builder(
+                      builder: (context) {
+                        final userProvider = context.watch<UserProvider>();
+
+                        if (request.loggedIn) {
+                          final profilePic = userProvider.profilePicture;
+                          final username =
+                              request.jsonData['username'] ??
+                              userProvider.username ??
+                              'User';
+
+                          Widget profileAvatar;
+                          if (profilePic != null && profilePic.isNotEmpty) {
+                            String imageUrl = profilePic;
+                            if (!imageUrl.startsWith('http')) {
+                              imageUrl = "${ApiConstants.baseUrl}$imageUrl";
+                            }
+                            profileAvatar = CircleAvatar(
+                              radius: 16,
+                              backgroundImage: NetworkImage(imageUrl),
+                              backgroundColor: Colors.transparent,
+                            );
+                          } else {
+                            profileAvatar = const CircleAvatar(
+                              radius: 16,
+                              backgroundColor: AppColors.lightGrey,
+                              child: Icon(Icons.person, color: AppColors.black),
+                            );
+                          }
+
+                          return PopupMenuButton<String>(
+                            offset: const Offset(0, 45),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            tooltip: 'Menu Profil',
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    username,
+                                    style: const TextStyle(
+                                      fontFamily: 'Quicksand',
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.black,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  profileAvatar,
+                                ],
+                              ),
+                            ),
+                            onSelected: (value) async {
+                              if (value == 'profile') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfilePage(),
+                                  ),
+                                );
+                              } else if (value == 'logout') {
+                                try {
+                                  final response = await request.logout(
+                                    "${ApiConstants.baseUrl}/auth/api_logout/",
+                                  );
+
+                                  if (context.mounted) {
+                                    if (response['status'] == true) {
+                                      final userProvider =
+                                          Provider.of<UserProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+                                      userProvider.clearUser();
+
+                                      SnackBarHelper.showSuccessSnackBar(
+                                        context,
+                                        response['message'] ??
+                                            'Logout berhasil!',
+                                      );
+
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const HomePage(),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    } else {
+                                      SnackBarHelper.showErrorSnackBar(
+                                        context,
+                                        response['message'] ?? 'Logout gagal!',
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    SnackBarHelper.showErrorSnackBar(
+                                      context,
+                                      'Terjadi kesalahan saat logout: $e',
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem<String>(
+                                value: 'profile',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Profil Saya',
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'logout',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.logout, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Keluar',
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          // Not Logged In
+                          return IconButton(
+                            icon: const Icon(
+                              Icons.account_circle,
+                              color: AppColors.black,
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      },
                     ),
                   ],
                 ],
@@ -189,7 +347,10 @@ class _MainLayoutState extends State<MainLayout> {
               // Drawer Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primaryGreen, AppColors.darkGreen],
@@ -201,7 +362,11 @@ class _MainLayoutState extends State<MainLayout> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset('assets/images/logo.png', height: 60, width: 60),
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 60,
+                        width: 60,
+                      ),
                       const SizedBox(height: 12),
                       const Text(
                         'mamicoach',
@@ -239,7 +404,9 @@ class _MainLayoutState extends State<MainLayout> {
                         Navigator.pop(context);
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const HomePage()),
+                          MaterialPageRoute(
+                            builder: (context) => const HomePage(),
+                          ),
                         );
                       },
                     ),
@@ -287,7 +454,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
                     const Divider(),
-                    
+
                     // Show "Kelas Saya" only for coaches
                     if (userProvider.isCoach)
                       _buildDrawerItem(
@@ -304,7 +471,7 @@ class _MainLayoutState extends State<MainLayout> {
                           );
                         },
                       ),
-                    
+
                     // Show "Booking Masuk" only for coaches
                     if (userProvider.isCoach)
                       _buildDrawerItem(
@@ -321,9 +488,9 @@ class _MainLayoutState extends State<MainLayout> {
                           );
                         },
                       ),
-                    
-                    // Show "Pembelajaran Saya" only for regular users (non-coaches)
-                    if (!userProvider.isCoach)
+
+                    // Show "Pembelajaran Saya" only for regular users (non-coaches) who are logged in
+                    if (request.loggedIn && !userProvider.isCoach)
                       _buildDrawerItem(
                         context,
                         icon: Icons.library_books,
@@ -338,62 +505,69 @@ class _MainLayoutState extends State<MainLayout> {
                           );
                         },
                       ),
-                    
-                    _buildDrawerItem(
-                      context,
-                      icon: Icons.verified,
-                      title: 'Bergabung Jadi Coach',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navigate to become coach page
-                      },
-                    ),
-                    const Divider(),
-                    _buildDrawerItem(
-                      context,
-                      icon: Icons.login,
-                      title: 'Masuk',
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ElevatedButton(
-                        onPressed: () {
+
+                    if (!request.loggedIn) ...[
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.verified,
+                        title: 'Bergabung Jadi Coach',
+                        onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const RegisterPage(),
+                              builder: (context) => const RegisterCoachPage(),
                             ),
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      ),
+                      const Divider(),
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.login,
+                        title: 'Masuk',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterPage(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Mulai Sekarang',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                          child: const Text(
+                            'Mulai Sekarang',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const Divider(),
+                      const Divider(),
+                    ],
                     _buildDrawerItem(
                       context,
                       icon: Icons.settings,
