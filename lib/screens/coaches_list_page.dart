@@ -144,10 +144,9 @@ class _CoachesListPageState extends State<CoachesListPage> {
     return MainLayout(
       child: Column(
         children: [
-          // Search and filter section
+          // Main content section
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(16),
               color: Colors.white,
               child: Stack(
                 fit: StackFit.expand,
@@ -167,7 +166,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
                               SliverToBoxAdapter(
                                 child: Container(
                                   color: Colors.white,
-                                  padding: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.all(16),
                                   child: Column(
                                     children: [
                                       // Title
@@ -462,43 +461,6 @@ class _CoachesListPageState extends State<CoachesListPage> {
                           ),
                         ),
                       ),
-                      // Fixed Pagination
-                      if (_pagination != null)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, -2),
-                              ),
-                            ],
-                          ),
-                          child: PaginationControls(
-                            currentPage: _pagination!['current_page'],
-                            totalPages: _pagination!['total_pages'],
-                            hasPrevious: _pagination!['has_previous'],
-                            hasNext: _pagination!['has_next'],
-                            isLoading: _isRefreshing || _isInitialLoading,
-                            onPrevious: () {
-                              if (_pagination!['has_previous']) {
-                                setState(() {
-                                  _currentPage--;
-                                });
-                                _loadCoaches(isRefresh: true);
-                              }
-                            },
-                            onNext: () {
-                              if (_pagination!['has_next']) {
-                                setState(() {
-                                  _currentPage++;
-                                });
-                                _loadCoaches(isRefresh: true);
-                              }
-                            },
-                          ),
-                        ),
                     ],
                   ),
                   if (_isRefreshing)
@@ -548,6 +510,31 @@ class _CoachesListPageState extends State<CoachesListPage> {
               ),
             ),
           ),
+          // Fixed Pagination - outside the Expanded
+          if (_pagination != null)
+            PaginationControls(
+              currentPage: _pagination!['current_page'],
+              totalPages: _pagination!['total_pages'],
+              hasPrevious: _pagination!['has_previous'],
+              hasNext: _pagination!['has_next'],
+              isLoading: _isRefreshing || _isInitialLoading,
+              onPrevious: () {
+                if (_pagination!['has_previous']) {
+                  setState(() {
+                    _currentPage--;
+                  });
+                  _loadCoaches(isRefresh: true);
+                }
+              },
+              onNext: () {
+                if (_pagination!['has_next']) {
+                  setState(() {
+                    _currentPage++;
+                  });
+                  _loadCoaches(isRefresh: true);
+                }
+              },
+            ),
         ],
       ),
     );
@@ -658,16 +645,58 @@ class _CoachesListPageState extends State<CoachesListPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      coach.expertise.isNotEmpty ? coach.expertise.first : '',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontSize: 12,
-                        color: AppColors.darkGrey,
+                    if (coach.expertise.isNotEmpty)
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          ...coach.expertise
+                              .take(3)
+                              .map(
+                                (exp) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryGreen.withOpacity(
+                                      0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    exp,
+                                    style: TextStyle(
+                                      fontFamily: 'Quicksand',
+                                      fontSize: 9,
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          if (coach.expertise.length > 3)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.darkGrey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '+${coach.expertise.length - 3}',
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontSize: 9,
+                                  color: AppColors.darkGrey,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
                     const Spacer(),
                     Row(
                       children: [

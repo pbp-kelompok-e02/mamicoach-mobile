@@ -24,52 +24,65 @@ class PaginationControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.lightGrey, width: 1)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Previous Button
-          ElevatedButton(
-            onPressed: (hasPrevious && !isLoading) ? onPrevious : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.primaryGreen,
-              elevation: 0,
-              side: BorderSide(
-                color: (hasPrevious && !isLoading)
-                    ? AppColors.primaryGreen
-                    : AppColors.lightGrey,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.chevron_left,
+          Expanded(
+            child: ElevatedButton(
+              onPressed: (hasPrevious && !isLoading) ? onPrevious : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                foregroundColor: AppColors.primaryGreen,
+                elevation: 0,
+                side: BorderSide(
                   color: (hasPrevious && !isLoading)
                       ? AppColors.primaryGreen
-                      : AppColors.grey,
+                      : AppColors.lightGrey,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  'Sebelumnya',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w600,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chevron_left,
+                    size: 20,
                     color: (hasPrevious && !isLoading)
                         ? AppColors.primaryGreen
                         : AppColors.grey,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Text(
+                    'Sebelumnya',
+                    style: TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: (hasPrevious && !isLoading)
+                          ? AppColors.primaryGreen
+                          : AppColors.grey,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           // Page Info
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              'Hal $currentPage / $totalPages',
+              '$currentPage / $totalPages',
               style: const TextStyle(
                 fontFamily: 'Quicksand',
                 fontWeight: FontWeight.bold,
@@ -79,39 +92,47 @@ class PaginationControls extends StatelessWidget {
           ),
 
           // Next Button
-          ElevatedButton(
-            onPressed: (hasNext && !isLoading) ? onNext : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.primaryGreen,
-              elevation: 0,
-              side: BorderSide(
-                color: (hasNext && !isLoading)
-                    ? AppColors.primaryGreen
-                    : AppColors.lightGrey,
+          Expanded(
+            child: ElevatedButton(
+              onPressed: (hasNext && !isLoading) ? onNext : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                foregroundColor: AppColors.primaryGreen,
+                elevation: 0,
+                side: BorderSide(
+                  color: (hasNext && !isLoading)
+                      ? AppColors.primaryGreen
+                      : AppColors.lightGrey,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Selanjutnya',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontWeight: FontWeight.w600,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Selanjutnya',
+                    style: TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: (hasNext && !isLoading)
+                          ? AppColors.primaryGreen
+                          : AppColors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 20,
                     color: (hasNext && !isLoading)
                         ? AppColors.primaryGreen
                         : AppColors.grey,
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right,
-                  color: (hasNext && !isLoading)
-                      ? AppColors.primaryGreen
-                      : AppColors.grey,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
