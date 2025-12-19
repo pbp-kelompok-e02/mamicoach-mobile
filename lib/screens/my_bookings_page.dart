@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
+import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -183,6 +184,23 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
           );
         }
       }
+    }
+  }
+
+  Future<void> _navigateToPayment(Booking booking) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodSelectionPage(
+          bookingId: booking.id,
+          amount: booking.price.toInt(),
+        ),
+      ),
+    );
+
+    // If payment was completed, refresh the bookings
+    if (result == true) {
+      _loadBookings();
     }
   }
 
@@ -511,19 +529,38 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     ),
                   ),
                   if (canCancel)
-                    TextButton.icon(
-                      onPressed: () => _cancelBooking(booking),
-                      icon: const Icon(Icons.cancel, size: 18),
-                      label: const Text(
-                        'Batalkan',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _navigateToPayment(booking),
+                          icon: const Icon(Icons.payment, size: 16),
+                          label: const Text(
+                            'Bayar Sekarang',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
-                      ),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.coralRed,
-                      ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => _cancelBooking(booking),
+                          icon: const Icon(Icons.cancel, size: 20),
+                          tooltip: 'Batalkan',
+                          color: AppColors.coralRed,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
                 ],
               ),
