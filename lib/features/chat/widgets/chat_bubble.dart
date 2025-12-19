@@ -3,8 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
-import 'package:mamicoach_mobile/screens/booking_detail_page.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
+import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
+import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -533,10 +536,19 @@ class ChatBubble extends StatelessWidget {
         onTap: bookingId == null
             ? null
             : () {
+                var isCoach = false;
+                try {
+                  isCoach = Provider.of<UserProvider>(context, listen: false).isCoach;
+                } catch (_) {
+                  // If UserProvider isn't available in this context, assume regular user.
+                }
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BookingDetailPage(bookingId: bookingId),
+                    builder: (_) => isCoach
+                        ? const CoachBookingsPage()
+                        : MyBookingsPage(initialBookingId: bookingId),
                   ),
                 );
               },
