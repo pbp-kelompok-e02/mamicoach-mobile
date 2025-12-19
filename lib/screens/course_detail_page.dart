@@ -13,6 +13,7 @@ import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/review/widgets/course_reviews_section.dart';
+import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -449,17 +450,31 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => ChatHelper.startChatWithCoach(
-                      context: context,
-                      coachId: course.coach.id,
-                      coachName: course.coach.fullName,
-                      preSendMessage:
-                          'Halo Coach ${course.coach.fullName}, saya tertarik dengan kelas "${course.title}". Boleh tanya-tanya dulu?',
-                      preSendAttachment: PreSendAttachment.course(
-                        courseId: course.id,
-                        title: course.title,
-                      ),
-                    ),
+                    onPressed: () {
+                      final request = context.read<CookieRequest>();
+                      print(request.loggedIn);
+                      if (!request.loggedIn) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                        return;
+                      }
+
+                      ChatHelper.startChatWithCoach(
+                        context: context,
+                        coachId: course.coach.id,
+                        coachName: course.coach.fullName,
+                        preSendMessage:
+                            'Halo Coach ${course.coach.fullName}, saya tertarik dengan kelas "${course.title}". Boleh tanya-tanya dulu?',
+                        preSendAttachment: PreSendAttachment.course(
+                          courseId: course.id,
+                          title: course.title,
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
@@ -529,10 +544,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         ),
 
         const Divider(),
-        CourseReviewsSection(
-          courseId: course.id,
-          courseTitle: course.title,
-        ),
+        CourseReviewsSection(courseId: course.id, courseTitle: course.title),
 
         // Related courses
         if (course.relatedCourses.isNotEmpty) ...[
@@ -641,7 +653,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             builder: (context) => BookingFormPage(course: course),
           ),
         );
-        
+
         // Refresh page if booking was successful
         if (result == true && mounted) {
           setState(() {});
