@@ -124,7 +124,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
           ),
         ),
         content: Text(
-          'Apakah Anda yakin ingin mengkonfirmasi booking ini?\n\nUser: ${booking.coachName}\nKelas: ${booking.courseTitle}\nWaktu: ${booking.dateTimeFormatted}',
+          'Apakah Anda yakin ingin mengkonfirmasi booking ini?\n\nUser: ${booking.userName}\nKelas: ${booking.courseTitle}\nWaktu: ${booking.dateTimeFormatted}',
           style: const TextStyle(fontFamily: 'Quicksand'),
         ),
         actions: [
@@ -612,7 +612,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.coachName,
+                        booking.userName,
                         style: const TextStyle(
                           fontFamily: 'Quicksand',
                           fontSize: 16,
