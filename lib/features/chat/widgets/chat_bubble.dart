@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
@@ -147,69 +148,295 @@ class ChatBubble extends StatelessWidget {
   }
 
   Widget _buildAttachment(BuildContext context, ChatAttachment attachment, bool isOwn) {
+    final ext = _fileExtension(attachment);
+    final inferredIsImage = _looksLikeImage(ext);
+    final absoluteUrl = _absoluteUrl(attachment.fileUrl);
+
     if (attachment.isImage) {
-      return Container(
-        margin: const EdgeInsets.only(top: 4),
-        child: _tappable(
-          context: context,
-          onTap: () => _openImagePreview(context, attachment),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: ProxyNetworkImage(
-              _absoluteUrl(attachment.fileUrl),
-              fit: BoxFit.cover,
-              placeholder: (context) => Container(
-                padding: const EdgeInsets.all(8),
-                color: Colors.grey,
-                child: const Icon(Icons.broken_image),
-              ),
-            ),
-          ),
-        ),
-      );
+      if (absoluteUrl == null) {
+        return _buildFileCard(context, attachment, isOwn, ext);
+      }
+      return _buildImageCard(context, attachment, absoluteUrl);
+    } else if (attachment.isFile && inferredIsImage) {
+      // Some backends may mark images as "file". If it looks like an image,
+      // render it as an image attachment for better UX.
+      if (absoluteUrl == null) {
+        return _buildFileCard(context, attachment, isOwn, ext);
+      }
+      return _buildImageCard(context, attachment, absoluteUrl);
     } else if (attachment.isFile) {
-      return Container(
-        margin: const EdgeInsets.only(top: 4),
-        child: _tappable(
-          context: context,
-          onTap: () => _openOrDownloadFile(context, attachment),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isOwn ? Colors.white.withOpacity(0.2) : Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.insert_drive_file,
-                  size: 20,
-                  color: isOwn ? Colors.white : Colors.grey[700],
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    attachment.fileName,
-                    style: TextStyle(
-                      fontSize: 13,
-                      decoration: TextDecoration.underline,
-                      color: isOwn ? Colors.white : Colors.black87,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return _buildFileCard(context, attachment, isOwn, ext);
     } else if (attachment.type == 'course') {
       return _buildCourseAttachment(context, attachment, isOwn);
     } else if (attachment.type == 'booking') {
       return _buildBookingAttachment(context, attachment, isOwn);
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildImageCard(
+    BuildContext context,
+    ChatAttachment attachment,
+    String absoluteUrl,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      child: _tappable(
+        context: context,
+        onTap: () => _openImagePreview(context, attachment),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: kIsWeb
+                ? ProxyNetworkImage(
+                    absoluteUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context) => const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : Image.network(
+                    absoluteUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Center(child: Icon(Icons.broken_image));
+                    },
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _fileExtension(ChatAttachment attachment) {
+    final name = attachment.fileName.trim();
+    String? ext;
+
+    if (name.contains('.')) {
+      ext = name.split('.').last;
+    }
+
+    // If filename does not have an extension, try from URL.
+    if ((ext == null || ext.isEmpty) && attachment.fileUrl != null) {
+      try {
+        final uri = Uri.parse(attachment.fileUrl!);
+        final lastSegment = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        if (lastSegment.contains('.')) {
+          ext = lastSegment.split('.').last;
+        }
+      } catch (_) {
+        // Ignore URL parse errors.
+      }
+    }
+
+    // Strip query-like suffixes if they accidentally land in fileName.
+    if (ext != null && ext.contains('?')) {
+      ext = ext.split('?').first;
+    }
+    if (ext != null && ext.contains('#')) {
+      ext = ext.split('#').first;
+    }
+
+    ext = ext?.toLowerCase().trim();
+    if (ext == null || ext.isEmpty) return null;
+    if (ext.length > 8) return null;
+    return ext;
+  }
+
+  Widget _buildFileCard(
+    BuildContext context,
+    ChatAttachment attachment,
+    bool isOwn,
+    String? ext,
+  ) {
+    final iconData = _fileIconForExtension(ext);
+    final label = _fileLabelForExtension(ext);
+    final extLabel = ext == null || ext.isEmpty ? null : ext.toUpperCase();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      child: _tappable(
+        context: context,
+        onTap: () => _openOrDownloadFile(context, attachment),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isOwn ? Colors.white.withOpacity(0.2) : Colors.grey[200],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                iconData,
+                size: 20,
+                color: isOwn ? Colors.white : Colors.grey[700],
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  attachment.fileName,
+                  style: TextStyle(
+                    fontSize: 13,
+                    decoration: TextDecoration.underline,
+                    color: isOwn ? Colors.white : Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (extLabel != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isOwn ? Colors.white.withOpacity(0.2) : Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: isOwn ? Colors.white.withOpacity(0.25) : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isOwn ? Colors.white : Colors.grey[800],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _looksLikeImage(String? ext) {
+    if (ext == null) return false;
+    const imageExts = <String>{'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'heic'};
+    return imageExts.contains(ext);
+  }
+
+  IconData _fileIconForExtension(String? ext) {
+    switch (ext) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+      case 'odt':
+      case 'rtf':
+      case 'txt':
+        return Icons.description;
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+      case 'ods':
+        return Icons.table_chart;
+      case 'ppt':
+      case 'pptx':
+      case 'odp':
+        return Icons.slideshow;
+      case 'zip':
+      case 'rar':
+      case '7z':
+      case 'tar':
+      case 'gz':
+        return Icons.archive;
+      case 'mp3':
+      case 'wav':
+      case 'aac':
+      case 'm4a':
+      case 'flac':
+      case 'ogg':
+        return Icons.audiotrack;
+      case 'mp4':
+      case 'mov':
+      case 'mkv':
+      case 'webm':
+      case 'avi':
+        return Icons.movie;
+      case 'apk':
+      case 'exe':
+      case 'msi':
+        return Icons.apps;
+      case 'json':
+      case 'xml':
+      case 'yaml':
+      case 'yml':
+      case 'md':
+      case 'dart':
+      case 'js':
+      case 'ts':
+      case 'py':
+      case 'java':
+      case 'kt':
+      case 'swift':
+      case 'c':
+      case 'cpp':
+      case 'h':
+        return Icons.code;
+      default:
+        return Icons.insert_drive_file;
+    }
+  }
+
+  String _fileLabelForExtension(String? ext) {
+    if (ext == null || ext.isEmpty) return 'FILE';
+    switch (ext) {
+      case 'pdf':
+        return 'PDF';
+      case 'doc':
+      case 'docx':
+      case 'odt':
+      case 'rtf':
+        return 'DOC';
+      case 'xls':
+      case 'xlsx':
+      case 'csv':
+      case 'ods':
+        return 'SHEET';
+      case 'ppt':
+      case 'pptx':
+      case 'odp':
+        return 'SLIDES';
+      case 'zip':
+      case 'rar':
+      case '7z':
+      case 'tar':
+      case 'gz':
+        return 'ZIP';
+      case 'mp3':
+      case 'wav':
+      case 'aac':
+      case 'm4a':
+      case 'flac':
+      case 'ogg':
+        return 'AUDIO';
+      case 'mp4':
+      case 'mov':
+      case 'mkv':
+      case 'webm':
+      case 'avi':
+        return 'VIDEO';
+      default:
+        return ext.toUpperCase();
+    }
   }
 
   Widget _buildCourseAttachment(BuildContext context, ChatAttachment attachment, bool isOwn) {
@@ -444,13 +671,25 @@ class ChatBubble extends StatelessWidget {
               InteractiveViewer(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: ProxyNetworkImage(
-                    url,
-                    fit: BoxFit.contain,
-                    placeholder: (context) => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+                  child: kIsWeb
+                      ? ProxyNetworkImage(
+                          url,
+                          fit: BoxFit.contain,
+                          placeholder: (context) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : Image.network(
+                          url,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(child: CircularProgressIndicator());
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(child: Icon(Icons.broken_image, color: Colors.white));
+                          },
+                        ),
                 ),
               ),
               Positioned(

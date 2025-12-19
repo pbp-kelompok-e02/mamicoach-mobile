@@ -443,7 +443,7 @@ class _MainLayoutState extends State<MainLayout> {
                       _buildDrawerItem(
                         context,
                         icon: Icons.chat_bubble_outline,
-                        title: 'My Chat',
+                        title: 'Pesan Saya',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(

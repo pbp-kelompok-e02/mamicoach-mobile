@@ -19,6 +19,7 @@ class _PendingAttachment {
   final int? courseId;
   final int? bookingId;
   final int signature;
+  final bool isUploading;
 
   const _PendingAttachment({
     required this.name,
@@ -27,7 +28,22 @@ class _PendingAttachment {
     this.courseId,
     this.bookingId,
     required this.signature,
+    this.isUploading = false,
   });
+
+  _PendingAttachment copyWith({
+    bool? isUploading,
+  }) {
+    return _PendingAttachment(
+      name: name,
+      type: type,
+      bytes: bytes,
+      courseId: courseId,
+      bookingId: bookingId,
+      signature: signature,
+      isUploading: isUploading ?? this.isUploading,
+    );
+  }
 
   bool get isImage => type == 'image';
   bool get isFileUpload => type == 'image' || type == 'file';
@@ -203,7 +219,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final toUpload = List<_PendingAttachment>.from(_pendingAttachments);
       setState(() {
         _replyToMessage = null;
-        _pendingAttachments.clear();
+        for (var i = 0; i < _pendingAttachments.length; i++) {
+          _pendingAttachments[i] = _pendingAttachments[i].copyWith(isUploading: true);
+        }
       });
 
       int failedUploads = 0;
@@ -242,6 +260,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       setState(() {
         _isSending = false;
+        _pendingAttachments.clear();
       });
 
       await _loadMessages();
@@ -486,22 +505,39 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                 ),
                         ),
                       ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: InkWell(
-                    onTap: () => _removePendingAttachmentAt(index),
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: const BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
+                if (!att.isUploading)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: InkWell(
+                      onTap: () => _removePendingAttachmentAt(index),
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
                       ),
-                      child: const Icon(Icons.close, size: 14, color: Colors.white),
                     ),
                   ),
-                ),
+
+                if (att.isUploading)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        color: Colors.black26,
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -580,6 +616,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               replyTo: _replyToMessage,
               onClearReply: _clearReply,
               hasPendingAttachments: _pendingAttachments.isNotEmpty,
+              isSending: _isSending,
               onAttachment: _openAttachmentPicker,
             ),
           ],

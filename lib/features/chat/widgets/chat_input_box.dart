@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 
 class ChatInputBox extends StatefulWidget {
-  final Function(String) onSend;
+  final Future<void> Function(String) onSend;
   final VoidCallback? onAttachment;
   final bool hasPendingAttachments;
+  final bool isSending;
   final String? initialText;
   final ChatMessage? replyTo;
   final VoidCallback? onClearReply;
@@ -14,6 +15,7 @@ class ChatInputBox extends StatefulWidget {
     required this.onSend,
     this.onAttachment,
     this.hasPendingAttachments = false,
+    this.isSending = false,
     this.initialText,
     this.replyTo,
     this.onClearReply,
@@ -40,7 +42,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       _controller.selection = TextSelection.fromPosition(
         TextPosition(offset: _controller.text.length),
       );
-      _canSend = _controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
+      _canSend = !widget.isSending &&
+          (_controller.text.trim().isNotEmpty || widget.hasPendingAttachments);
     }
   }
 
@@ -48,6 +51,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   void didUpdateWidget(covariant ChatInputBox oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.hasPendingAttachments != widget.hasPendingAttachments) {
+      _updateSendButton();
+    }
+
+    if (oldWidget.isSending != widget.isSending) {
       _updateSendButton();
     }
 
@@ -73,14 +80,17 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
   void _updateSendButton() {
     setState(() {
-      _canSend = _controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
+      _canSend =
+          !widget.isSending && (_controller.text.trim().isNotEmpty || widget.hasPendingAttachments);
     });
   }
 
-  void _handleSend() {
+  Future<void> _handleSend() async {
+    if (widget.isSending) return;
     final text = _controller.text.trim();
     if (text.isNotEmpty || widget.hasPendingAttachments) {
-      widget.onSend(text);
+      await widget.onSend(text);
+      if (!mounted) return;
       _controller.clear();
       setState(() {
         _canSend = false;
@@ -113,7 +123,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                 if (widget.onAttachment != null)
                   IconButton(
                     icon: const Icon(Icons.attach_file),
-                    onPressed: widget.onAttachment,
+                    onPressed: widget.isSending ? null : widget.onAttachment,
                     color: Colors.grey[600],
                   ),
                 Expanded(
