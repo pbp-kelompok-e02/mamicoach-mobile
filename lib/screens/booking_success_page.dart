@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/course_detail.dart';
+import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
 
 class BookingSuccessPage extends StatelessWidget {
   final String bookingId;
@@ -522,17 +523,44 @@ class BookingSuccessPage extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navigate to payment page
-                    // For now, show message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Fitur pembayaran akan segera hadir',
-                          style: TextStyle(fontFamily: 'Quicksand'),
+                  onPressed: () async {
+                    // Navigate to payment method selection
+                    final result = await Navigator.push<bool?>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PaymentMethodSelectionPage(
+                          bookingId: int.parse(bookingId),
+                          amount: course.price.toInt(),
                         ),
                       ),
                     );
+
+                    // Handle payment result
+                    if (result == true && context.mounted) {
+                      // Payment successful, show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Pembayaran berhasil! Booking Anda telah dibayar.',
+                            style: TextStyle(fontFamily: 'Quicksand'),
+                          ),
+                          backgroundColor: AppColors.primaryGreen,
+                        ),
+                      );
+                      // Navigate back to home
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    } else if (result == false && context.mounted) {
+                      // Payment failed or cancelled
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Pembayaran gagal atau dibatalkan. Anda dapat mencoba lagi.',
+                            style: TextStyle(fontFamily: 'Quicksand'),
+                          ),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.payment, size: 20),
                   label: const Text(
