@@ -157,8 +157,9 @@ class _MainLayoutState extends State<MainLayout> {
                     Builder(
                       builder: (context) {
                         final userProvider = context.watch<UserProvider>();
+                        final bool isLoggedIn = userProvider.username != null;
 
-                        if (request.loggedIn) {
+                        if (isLoggedIn) {
                           final profilePic = userProvider.profilePicture;
                           final username =
                               request.jsonData['username'] ??
@@ -340,7 +341,7 @@ class _MainLayoutState extends State<MainLayout> {
   Widget _buildDrawer(BuildContext context) {
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
-        final request = context.watch<CookieRequest>();
+        final bool isLoggedIn = userProvider.username != null;
         return Drawer(
           child: Column(
             children: [
@@ -438,7 +439,7 @@ class _MainLayoutState extends State<MainLayout> {
                         );
                       },
                     ),
-                    if (request.loggedIn)
+                    if (isLoggedIn)
                       _buildDrawerItem(
                         context,
                         icon: Icons.chat_bubble_outline,
@@ -490,7 +491,7 @@ class _MainLayoutState extends State<MainLayout> {
                       ),
 
                     // Show "Pembelajaran Saya" only for regular users (non-coaches) who are logged in
-                    if (request.loggedIn && !userProvider.isCoach)
+                    if (isLoggedIn && !userProvider.isCoach)
                       _buildDrawerItem(
                         context,
                         icon: Icons.library_books,
@@ -506,7 +507,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
 
-                    if (!request.loggedIn) ...[
+                    if (!isLoggedIn) ...[
                       _buildDrawerItem(
                         context,
                         icon: Icons.verified,
