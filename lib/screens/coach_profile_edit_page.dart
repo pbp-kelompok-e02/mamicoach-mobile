@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
+import 'package:url_launcher/url_launcher.dart';
 
 class CoachProfileEditPage extends StatefulWidget {
   const CoachProfileEditPage({super.key});
@@ -143,6 +144,29 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
       }
     }
   }
+  Future<void> _launchURL(String urlString) async {
+    if (urlString.trim().isEmpty) return;
+    
+    // Ensure URL has scheme
+    if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+      urlString = 'https://$urlString';
+    }
+
+    try {
+      final Uri url = Uri.parse(urlString);
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        if (mounted) {
+          SnackBarHelper.showErrorSnackBar(context, 'Tidak dapat membuka link');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(context, 'Link tidak valid');
+      }
+    }
+  }
+
+  bool _isAddingCert = false;
 
   void _addNewCertification() {
     if (_certNameController.text.trim().isEmpty || 
@@ -161,6 +185,7 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
       });
       _certNameController.clear();
       _certUrlController.clear();
+      _isAddingCert = false; // Close form after adding
     });
   }
 
@@ -177,6 +202,246 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
       _existingCertifications.removeAt(index);
     });
   }
+
+  Widget _buildStatusBadge(String status) {
+    Color bgColor;
+    Color textColor = Colors.white;
+    String text;
+
+    switch (status) {
+      case 'approved':
+        bgColor = Colors.blue; // Matches screenshot "Pending" style but for approved usually green, keeping blue as per request if verified is blue, otherwise sticking to standard.
+        // Wait, screenshot shows "Pending" is Blue.
+        // Let's follow: Approved -> Green ("Verified"), Pending -> Blue ("Pending"), Rejected -> Red ("Rejected")
+        bgColor = AppColors.primaryGreen;
+        text = 'Verified';
+        break;
+      case 'rejected':
+        bgColor = Colors.red;
+        text = 'Rejected';
+        break;
+      default: // pending
+        bgColor = const Color(0xFF1E88E5); // Blue like screenshot
+        text = 'Pending';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Quicksand',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCertificateItem({
+    required String name,
+    required String url,
+    required String status, // 'approved', 'pending', 'rejected', 'new'
+    required VoidCallback onDelete,
+  }) {
+    // Treat 'new' as 'pending' for display
+    final displayStatus = status == 'new' ? 'pending' : status;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white, // Matches the white card look
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Blue dot
+          Container(
+            width: 10,
+            height: 10,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E88E5), // Blue dot
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Name
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(
+                fontFamily: 'Quicksand',
+                fontSize: 14,
+                color: AppColors.black,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Badge
+          _buildStatusBadge(displayStatus),
+          const SizedBox(width: 12),
+          // Link Icon
+          InkWell(
+            onTap: () => _launchURL(url),
+            child: Icon(
+              Icons.launch,
+              size: 20,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Delete Icon
+          InkWell(
+            onTap: onDelete,
+            child: const Icon(
+              Icons.close,
+              size: 20,
+              color: Colors.red,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddCertificateForm() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primaryGreen),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Sertifikasi Baru',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: AppColors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Name Input
+          const Text(
+            'Certificate Name',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 12,
+              color: AppColors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _certNameController,
+            decoration: InputDecoration(
+              hintText: 'e.g., Certified Personal Trainer',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: AppColors.primaryGreen),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // URL Input
+          const Text(
+            'Certificate Link',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 12,
+              color: AppColors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _certUrlController,
+            decoration: InputDecoration(
+              hintText: 'https://example.com/certificate.pdf',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: AppColors.primaryGreen),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isAddingCert = false;
+                    _certNameController.clear();
+                    _certUrlController.clear();
+                  });
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey.shade200,
+                  foregroundColor: Colors.black54,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _addNewCertification,
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                child: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ... (inside build) ...
+
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
@@ -220,10 +485,15 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
         if (response['success'] == true) {
           // Update user provider
           final userProvider = Provider.of<UserProvider>(context, listen: false);
+          
+          // Get new image URL from response if available
+          String? newImageUrl = response['new_profile_image_url'];
+
           userProvider.setUser(
             userProvider.username ?? '',
             userProvider.isCoach,
-            profilePicture: _newProfileImageBytes != null ? null : _currentProfileImageUrl,
+            // Use new URL if available, otherwise keep current
+            profilePicture: newImageUrl ?? _currentProfileImageUrl,
           );
 
           SnackBarHelper.showSuccessSnackBar(
@@ -494,165 +764,72 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
               const SizedBox(height: 24),
 
               // Certifications Section
-              const Text(
-                'Sertifikat',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Existing Certifications
-              if (_existingCertifications.isNotEmpty) ...[
-                const Text(
-                  'Sertifikat Anda:',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: 14,
-                    color: AppColors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ..._existingCertifications.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final cert = entry.value;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.verified,
-                        color: cert['status'] == 'approved'
-                            ? Colors.green
-                            : cert['status'] == 'pending'
-                                ? Colors.orange
-                                : Colors.red,
-                      ),
-                      title: Text(
-                        cert['name'],
-                        style: const TextStyle(fontFamily: 'Quicksand'),
-                      ),
-                      subtitle: Text(
-                        cert['url'],
-                        style: const TextStyle(fontFamily: 'Quicksand'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteExistingCertification(index),
-                      ),
-                    ),
-                  );
-                }).toList(),
-                const SizedBox(height: 16),
-              ],
-
-              // New Certifications
-              if (_newCertifications.isNotEmpty) ...[
-                const Text(
-                  'Sertifikat Baru:',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: 14,
-                    color: AppColors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ..._newCertifications.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final cert = entry.value;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    color: Colors.green.shade50,
-                    child: ListTile(
-                      leading: const Icon(Icons.new_releases, color: Colors.green),
-                      title: Text(
-                        cert['name']!,
-                        style: const TextStyle(fontFamily: 'Quicksand'),
-                      ),
-                      subtitle: Text(
-                        cert['url']!,
-                        style: const TextStyle(fontFamily: 'Quicksand'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _removeNewCertification(index),
-                      ),
-                    ),
-                  );
-                }).toList(),
-                const SizedBox(height: 16),
-              ],
-
-              // Add Certification Form
-              const Text(
-                'Tambah Sertifikat Baru:',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _certNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Sertifikat',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand'),
-                        hintText: 'e.g., Certified Trainer',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryGreen,
-                            width: 2,
-                          ),
-                        ),
-                      ),
+                  const Text(
+                    'Certifications',
+                    style: TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.black,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _certUrlController,
-                      decoration: InputDecoration(
-                        labelText: 'URL Sertifikat',
-                        labelStyle: const TextStyle(fontFamily: 'Quicksand'),
-                        hintText: 'https://...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryGreen,
-                            width: 2,
-                          ),
+                  if (!_isAddingCert)
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _isAddingCert = true;
+                        });
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text(
+                        'Add Certification',
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primaryGreen,
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _addNewCertification,
-                    icon: const Icon(Icons.add_circle),
-                    color: AppColors.primaryGreen,
-                    iconSize: 36,
-                  ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Existing Certifications
+              ..._existingCertifications.asMap().entries.map((entry) {
+                final index = entry.key;
+                final cert = entry.value;
+                return _buildCertificateItem(
+                  name: cert['name'],
+                  url: cert['url'],
+                  status: cert['status'],
+                  onDelete: () => _deleteExistingCertification(index),
+                );
+              }),
+
+              // New Certifications
+              ..._newCertifications.asMap().entries.map((entry) {
+                final index = entry.key;
+                final cert = entry.value;
+                return _buildCertificateItem(
+                  name: cert['name']!,
+                  url: cert['url']!,
+                  status: 'new', // Display as pending
+                  onDelete: () => _removeNewCertification(index),
+                );
+              }),
+
+              // Add Certification Form (Conditional)
+              if (_isAddingCert) ...[
+                const SizedBox(height: 8),
+                _buildAddCertificateForm(),
+              ],
 
               const SizedBox(height: 32),
 

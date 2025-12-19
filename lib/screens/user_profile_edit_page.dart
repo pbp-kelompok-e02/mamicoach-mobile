@@ -47,7 +47,7 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
           final user = response['profile']['user'];
           _firstNameController.text = user['first_name'] ?? '';
           _lastNameController.text = user['last_name'] ?? '';
-          _currentProfileImageUrl = user['profile_image'];
+          _currentProfileImageUrl = response['profile']['profile_image'];
           _isLoading = false;
         });
       }
@@ -117,10 +117,15 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
         if (response['success'] == true) {
           // Update user provider
           final userProvider = Provider.of<UserProvider>(context, listen: false);
+          
+          // Get new image URL from response if available
+          String? newImageUrl = response['new_profile_image_url'];
+          
           userProvider.setUser(
             userProvider.username ?? '',
             userProvider.isCoach,
-            profilePicture: _newProfileImageBytes != null ? null : _currentProfileImageUrl,
+            // Use new URL if available, otherwise keep current
+            profilePicture: newImageUrl ?? _currentProfileImageUrl,
           );
 
           SnackBarHelper.showSuccessSnackBar(
