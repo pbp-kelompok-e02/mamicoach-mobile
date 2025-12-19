@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:mamicoach_mobile/screens/user_profile_edit_page.dart';
 import 'package:mamicoach_mobile/screens/coach_profile_edit_page.dart';
+import 'package:mamicoach_mobile/screens/coach_dashboard_page.dart';
+import 'package:mamicoach_mobile/screens/user_dashboard_page.dart';
 import 'package:mamicoach_mobile/widgets/main_layout.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -25,7 +27,7 @@ class ProfilePage extends StatelessWidget {
 
     // Langsung tampilkan halaman edit profil sesuai tipe user
     return userProvider.isCoach
-        ? const CoachProfileEditPage()
-        : const UserProfileEditPage();
+        ? const CoachDashboardPage()
+        : const UserDashboardPage();
   }
 }
