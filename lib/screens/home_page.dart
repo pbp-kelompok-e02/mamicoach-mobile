@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     final request = context.watch<CookieRequest>();
 
     return MainLayout(
-      title: 'MamiCoach',
+      title: 'mamicoach',
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

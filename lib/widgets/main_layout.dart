@@ -11,12 +11,37 @@ import 'package:mamicoach_mobile/screens/my_courses_page.dart';
 import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
 import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
+import 'package:mamicoach_mobile/features/chat/screens/chat_index_screen.dart';
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends StatefulWidget {
   final Widget child;
   final String title;
 
-  const MainLayout({super.key, required this.child, this.title = 'MamiCoach'});
+  const MainLayout({super.key, required this.child, this.title = 'mamicoach'});
+
+  @override
+  State<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends State<MainLayout> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        FocusManager.instance.primaryFocus?.unfocus();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +50,7 @@ class MainLayout extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 1,
         toolbarHeight: 70,
+        titleSpacing: 0,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: AppColors.black),
@@ -33,51 +59,75 @@ class MainLayout extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Image.asset('assets/images/logo.png', height: 40, width: 40),
-            const SizedBox(width: 12),
-            const Text(
-              'mamicoach',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryGreen,
-                fontSize: 24,
-              ),
+            Image.asset(
+              'assets/images/logo.png',
+              height: _isSearching ? 34 : 38,
+              width: _isSearching ? 34 : 38,
             ),
-            const SizedBox(width: 24),
+            const SizedBox(width: 8),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: _isSearching
+                  ? const SizedBox.shrink()
+                  : Text(
+                      widget.title,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                        fontSize: 20,
+                      ),
+                    ),
+            ),
+            SizedBox(width: _isSearching ? 8 : 12),
             Expanded(
-              child: Container(
-                height: 45,
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Cari kelas atau coach...',
-                    hintStyle: TextStyle(
-                      fontFamily: 'Quicksand',
-                      color: AppColors.grey,
-                      fontSize: 14,
-                    ),
-                    prefixIcon: Icon(Icons.search, color: AppColors.grey),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
-                  onSubmitted: (value) {
-                    if (value.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ClassesPage(searchQuery: value),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: !_isSearching
+                    ? const SizedBox.shrink()
+                    : Container(
+                        key: const ValueKey('searchField'),
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGrey.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                      );
-                    }
-                  },
-                ),
+                        child: TextField(
+                          controller: _searchController,
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            hintText: 'Cari kelas atau coach...',
+                            hintStyle: TextStyle(
+                              fontFamily: 'Quicksand',
+                              color: AppColors.grey,
+                              fontSize: 14,
+                            ),
+                            prefixIcon:
+                                const Icon(Icons.search, color: AppColors.grey),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: (value) {
+                            final query = value.trim();
+                            if (query.isEmpty) return;
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ClassesPage(searchQuery: query),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
               ),
             ),
           ],
@@ -88,27 +138,35 @@ class MainLayout extends StatelessWidget {
               final request = context.watch<CookieRequest>();
               return Row(
                 children: [
-                  if (request.loggedIn) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        request.jsonData['username'] ?? 'User',
-                        style: const TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
                   IconButton(
-                    icon: const Icon(
-                      Icons.account_circle,
+                    icon: Icon(
+                      _isSearching ? Icons.close : Icons.search,
                       color: AppColors.black,
                     ),
-                    onPressed: () {},
+                    onPressed: _toggleSearch,
                   ),
+                  if (!_isSearching) ...[
+                    if (request.loggedIn)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          request.jsonData['username'] ?? 'User',
+                          style: const TextStyle(
+                            fontFamily: 'Quicksand',
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.black,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.account_circle,
+                        color: AppColors.black,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
                 ],
               );
             },
@@ -117,13 +175,14 @@ class MainLayout extends StatelessWidget {
         ],
       ),
       drawer: _buildDrawer(context),
-      body: child,
+      body: widget.child,
     );
   }
 
   Widget _buildDrawer(BuildContext context) {
     return Consumer<UserProvider>(
       builder: (context, userProvider, child) {
+        final request = context.watch<CookieRequest>();
         return Drawer(
           child: Column(
             children: [
@@ -212,6 +271,21 @@ class MainLayout extends StatelessWidget {
                         );
                       },
                     ),
+                    if (request.loggedIn)
+                      _buildDrawerItem(
+                        context,
+                        icon: Icons.chat_bubble_outline,
+                        title: 'My Chat',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChatIndexScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     const Divider(),
                     
                     // Show "Kelas Saya" only for coaches
