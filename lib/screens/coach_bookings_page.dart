@@ -20,7 +20,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
   late TabController _tabController;
   List<Booking> _allBookings = [];
   bool _isLoading = true;
-  bool _isLoading = true;
+
   String? _errorMessage;
   bool _isConnectionError = false;
 

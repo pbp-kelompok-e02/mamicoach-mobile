@@ -363,9 +363,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
                               children: [
                                 Column(
                                   children: [
-                                    Expanded(
-                                      child: GridView.builder(
-                          children: [
+
                             Expanded(
                               child: GridView.builder(
                                 padding: const EdgeInsets.all(16),
