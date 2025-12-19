@@ -123,6 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                           userProvider.setUser(
                             response['username'],
                             response['is_coach'] ?? false,
+                            profilePicture: response['profile_image'],
                           );
 
                           SnackBarHelper.showSuccessSnackBar(
