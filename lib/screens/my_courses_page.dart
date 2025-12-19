@@ -5,7 +5,8 @@ import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/screens/schedule_management_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/widgets/custom_refresh_indicator.dart';
@@ -13,7 +14,7 @@ import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-import 'dart:io';
+import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
 
 class MyCoursesPage extends StatefulWidget {
   const MyCoursesPage({super.key});
@@ -66,8 +67,9 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
           _isInitialLoading = false;
           _isRefreshing = false;
           _errorMessage = e.toString().replaceAll('Exception: ', '');
-          _isConnectionError = e.toString().contains('SocketException') || 
-                              e.toString().contains('Connection closed');
+          _isConnectionError =
+              e.toString().contains('SocketException') ||
+              e.toString().contains('Connection closed');
         });
       }
     }
@@ -124,41 +126,45 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) => const Padding(
                     padding: EdgeInsets.only(bottom: 16),
-                    child: ShimmerPlaceholder(width: double.infinity, height: 200),
+                    child: ShimmerPlaceholder(
+                      width: double.infinity,
+                      height: 200,
+                    ),
                   ),
                 )
-                  : _errorMessage != null
-                      ? CommonErrorWidget(
-                          message: _errorMessage!,
-                          isConnectionError: _isConnectionError,
-                          onRetry: () {
-                            setState(() {
-                              _isInitialLoading = true;
-                              _errorMessage = null;
-                            });
-                            _loadCourses();
-                          },
-                        )
-                      : _courses.isEmpty
-                          ? CommonEmptyWidget(
-                              title: 'Anda belum membuat kelas apapun',
-                              message: 'Mulai bagikan pengetahuan Anda dengan membuat kelas baru',
-                              icon: Icons.school_outlined,
-                              actionLabel: 'Buat Kelas',
-                              onAction: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CourseFormPage(),
-                                  ),
-                                );
-                                _currentPage = 1;
-                                _loadCourses();
-                              },
-                            )
-                          : Stack(
-                              children: [
-                                Column(
+              : _errorMessage != null
+              ? CommonErrorWidget(
+                  message: _errorMessage!,
+                  isConnectionError: _isConnectionError,
+                  onRetry: () {
+                    setState(() {
+                      _isInitialLoading = true;
+                      _errorMessage = null;
+                    });
+                    _loadCourses();
+                  },
+                )
+              : _courses.isEmpty
+              ? CommonEmptyWidget(
+                  title: 'Anda belum membuat kelas apapun',
+                  message:
+                      'Mulai bagikan pengetahuan Anda dengan membuat kelas baru',
+                  icon: Icons.school_outlined,
+                  actionLabel: 'Buat Kelas',
+                  onAction: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CourseFormPage(),
+                      ),
+                    );
+                    _currentPage = 1;
+                    _loadCourses();
+                  },
+                )
+              : Stack(
+                  children: [
+                    Column(
                       children: [
                         // Schedule Management Button
                         Container(
@@ -178,129 +184,112 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                               icon: const Icon(Icons.calendar_today),
                               label: const Text(
                                 'Atur Ketersediaan Saya',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _courses.length,
-                    itemBuilder: (context, index) {
-                      return _buildCourseCard(_courses[index]);
-                    },
-                  ),
-                ),
 
-                // Pagination
-                if (_pagination != null)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.white,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton.icon(
-                          onPressed: _pagination!['has_previous']
-                              ? () {
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _courses.length,
+                            itemBuilder: (context, index) {
+                              return _buildCourseCard(_courses[index]);
+                            },
+                          ),
+                        ),
+
+                        // Pagination
+                        // Pagination is kept inside the Stack but outside Expanded ListView
+                        if (_pagination != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: PaginationControls(
+                              currentPage: _pagination!['current_page'],
+                              totalPages: _pagination!['total_pages'],
+                              hasPrevious: _pagination!['has_previous'],
+                              hasNext: _pagination!['has_next'],
+                              isLoading: _isRefreshing || _isInitialLoading,
+                              onPrevious: () {
+                                if (_pagination!['has_previous']) {
                                   setState(() {
                                     _currentPage--;
                                   });
-                                  _loadCourses();
+                                  _loadCourses(isRefresh: true);
                                 }
-                              : null,
-                          icon: const Icon(Icons.chevron_left),
-                          label: const Text(
-                            'Sebelumnya',
-                            style: TextStyle(fontFamily: 'Quicksand'),
-                          ),
-                        ),
-                        Text(
-                          'Halaman ${_pagination!['current_page']} dari ${_pagination!['total_pages']}',
-                          style: const TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: _pagination!['has_next']
-                              ? () {
+                              },
+                              onNext: () {
+                                if (_pagination!['has_next']) {
                                   setState(() {
                                     _currentPage++;
                                   });
-                                  _loadCourses();
+                                  _loadCourses(isRefresh: true);
                                 }
-                              : null,
-                          icon: const Icon(Icons.chevron_right),
-                          label: const Text(
-                            'Selanjutnya',
-                            style: TextStyle(fontFamily: 'Quicksand'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-                        if (_isRefreshing)
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.primaryGreen,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Memperbarui data...',
-                                    style: TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontSize: 14,
-                                      color: AppColors.darkGrey,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              },
                             ),
                           ),
                       ],
                     ),
+                    if (_isRefreshing)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.primaryGreen,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Memperbarui data...',
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontSize: 14,
+                                  color: AppColors.darkGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
         ),
       ),
     );

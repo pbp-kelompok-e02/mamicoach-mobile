@@ -4,7 +4,9 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/coach_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/screens/course_detail_page.dart';
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
 import 'package:mamicoach_mobile/features/review/widgets/coach_reviews_section.dart';
@@ -377,9 +379,7 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
 
                 const Divider(),
 
-                CoachReviewsSection(
-                  coachId: coach.id,
-                ),
+                CoachReviewsSection(coachId: coach.id),
               ],
             ),
           );
@@ -421,13 +421,12 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navigate to course detail
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => CourseDetailPage(courseId: course.id),
-          //   ),
-          // );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CourseDetailPage(courseId: course.id),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
