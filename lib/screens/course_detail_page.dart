@@ -13,7 +13,6 @@ import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/review/widgets/course_reviews_section.dart';
-import 'package:mamicoach_mobile/features/review/widgets/course_my_reviews_section.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -534,14 +533,6 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
           courseId: course.id,
           courseTitle: course.title,
         ),
-
-        if (!isOwner && request.loggedIn) ...[
-          const Divider(),
-          CourseMyReviewsSection(
-            courseId: course.id,
-            courseTitle: course.title,
-          ),
-        ],
 
         // Related courses
         if (course.relatedCourses.isNotEmpty) ...[

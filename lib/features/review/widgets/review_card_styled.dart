@@ -27,11 +27,14 @@ class ReviewCardStyled extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = review.isAnonymous
-        ? 'Anonymous User'
-        : (authorName?.trim().isNotEmpty == true ? authorName!.trim() : 'User');
+      ? 'Pengguna Anonim'
+      : (authorName?.trim().isNotEmpty == true
+        ? authorName!.trim()
+        : 'Pengguna');
+
     final displayCourseTitle = (courseTitle?.trim().isNotEmpty == true)
       ? courseTitle!.trim()
-      : 'Course #${review.courseId}';
+      : (review.courseId > 0 ? 'Kelas #${review.courseId}' : 'Kelas tidak tersedia');
 
     return SizedBox(
       width: double.infinity,

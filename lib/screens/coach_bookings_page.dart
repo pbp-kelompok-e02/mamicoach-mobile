@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
+import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
+import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
+import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -347,6 +350,61 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     }
   }
 
+  Future<void> _openChatForBooking(Booking booking) async {
+    final request = context.read<CookieRequest>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final result = await ChatService.createChatWithUser(
+      userId: booking.userId,
+      request: request,
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+
+    if (result['success'] == true) {
+      final sessionId = result['session_id'] as String;
+      final otherUser = result['other_user'] != null
+          ? ChatUser.fromJson(result['other_user'] as Map<String, dynamic>)
+          : ChatUser(
+              id: booking.userId,
+              username: booking.userName,
+              firstName: '',
+              lastName: '',
+              profileImageUrl: null,
+            );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatDetailScreen(
+            sessionId: sessionId,
+            otherUser: otherUser,
+            preSendMessage:
+                'Halo ${booking.userName}, saya Coach ${booking.coachName}. Ada yang ingin ditanyakan terkait booking #${booking.id} untuk kelas "${booking.courseTitle}"?',
+            preSendAttachment: PreSendAttachment.booking(
+              bookingId: booking.id,
+              title: booking.courseTitle,
+            ),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['error'] ?? 'Gagal membuka chat'),
+          backgroundColor: AppColors.coralRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -462,6 +520,13 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     final canConfirm = booking.status == 'paid';
     final canReject = booking.status == 'paid' || booking.status == 'pending';
     final canMarkDone = booking.status == 'confirmed';
+    final canChat = booking.status == 'confirmed';
+    final buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    const buttonPadding = EdgeInsets.symmetric(vertical: 12);
+    const buttonTextStyle = TextStyle(
+      fontFamily: 'Quicksand',
+      fontWeight: FontWeight.bold,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -634,7 +699,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
             ),
 
             // Action buttons
-            if (canConfirm || canReject || canMarkDone) ...[
+            if (canConfirm || canReject || canMarkDone || canChat) ...[
               const SizedBox(height: 16),
               const Divider(height: 1),
               const SizedBox(height: 12),
@@ -647,15 +712,13 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                         icon: const Icon(Icons.check_circle, size: 18),
                         label: const Text(
                           'Konfirmasi',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: buttonTextStyle,
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: buttonPadding,
+                          shape: buttonShape,
                         ),
                       ),
                     ),
@@ -668,18 +731,36 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                         icon: const Icon(Icons.cancel, size: 18),
                         label: const Text(
                           'Tolak',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: buttonTextStyle,
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.coralRed,
                           side: const BorderSide(color: AppColors.coralRed),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: buttonPadding,
+                          shape: buttonShape,
                         ),
                       ),
                     ),
+                  if (canReject && (canChat || canMarkDone)) const SizedBox(width: 8),
+                  if (canChat) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _openChatForBooking(booking),
+                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                        label: const Text(
+                          'Chat',
+                          style: buttonTextStyle,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryGreen,
+                          side: const BorderSide(color: AppColors.primaryGreen),
+                          padding: buttonPadding,
+                          shape: buttonShape,
+                        ),
+                      ),
+                    ),
+                    if (canMarkDone) const SizedBox(width: 8),
+                  ],
                   if (canMarkDone)
                     Expanded(
                       child: ElevatedButton.icon(
@@ -687,15 +768,13 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                         icon: const Icon(Icons.done_all, size: 18),
                         label: const Text(
                           'Selesai',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: buttonTextStyle,
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: buttonPadding,
+                          shape: buttonShape,
                         ),
                       ),
                     ),

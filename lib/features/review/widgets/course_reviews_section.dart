@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/features/review/models/reviews.dart';
+import 'package:mamicoach_mobile/features/review/screens/review_form_screen.dart';
 import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:mamicoach_mobile/features/review/widgets/review_card.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -49,8 +51,10 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
     if (!mounted) return;
 
     if (result['success'] == true) {
+      final raw = (result['reviews_raw'] as List<Map<String, dynamic>>);
+
       setState(() {
-        _reviews = (result['reviews_raw'] as List<Map<String, dynamic>>);
+        _reviews = raw;
         _isLoading = false;
         _error = null;
       });
@@ -80,7 +84,10 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
       'course_id': _parseInt(r['course_id']),
       'user_id': r['user_id'] == null ? null : _parseInt(r['user_id']),
       'created_at': createdAt ?? DateTime.now().toIso8601String(),
-      'updated_at': r['updated_at']?.toString() ?? createdAt ?? DateTime.now().toIso8601String(),
+      'updated_at':
+          r['updated_at']?.toString() ??
+          createdAt ??
+          DateTime.now().toIso8601String(),
     };
   }
 
@@ -99,8 +106,18 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
     return null;
   }
 
+  String? _authorUsernameOrNull(Map<String, dynamic> r) {
+    final author = r['author'];
+    if (author is Map) {
+      final username = author['username']?.toString().trim();
+      if (username != null && username.isNotEmpty) return username;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loggedIn = context.read<CookieRequest>().loggedIn;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -131,7 +148,9 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.primaryGreen,
+                  ),
                 ),
               ),
             )
@@ -150,11 +169,13 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
               ),
             )
           else if (_reviews.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                'Belum ada ulasan untuk kelas ini.',
-                style: TextStyle(
+                loggedIn
+                    ? 'Belum ada ulasan lain untuk kelas ini.'
+                    : 'Belum ada ulasan untuk kelas ini.',
+                style: const TextStyle(
                   fontFamily: 'Quicksand',
                   color: AppColors.darkGrey,
                 ),
@@ -170,10 +191,35 @@ class _CourseReviewsSectionState extends State<CourseReviewsSection> {
                 final r = _reviews[index];
 
                 final review = Review.fromJson(_normalizeToReviewJson(r));
+
+                final currentUsername = context.watch<UserProvider>().username;
+                final authorUsername = _authorUsernameOrNull(r);
+                final isAuthor =
+                    loggedIn &&
+                    currentUsername != null &&
+                    authorUsername != null &&
+                    currentUsername == authorUsername;
+
                 return ReviewCard(
                   review: review,
+                  isAuthor: isAuthor,
                   authorName: _authorNameOrNull(r),
                   courseTitle: widget.courseTitle,
+                  onEdit: isAuthor
+                      ? () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ReviewFormScreen(review: review),
+                            ),
+                          );
+                          if (!mounted) return;
+                          if (result != null) {
+                            await _load();
+                          }
+                        }
+                      : null,
                 );
               },
             ),

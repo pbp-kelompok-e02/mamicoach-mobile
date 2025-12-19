@@ -166,6 +166,34 @@ class ChatService {
     }
   }
 
+  static Future<Map<String, dynamic>> createChatWithUser({
+    required int userId,
+    required CookieRequest request,
+  }) async {
+    try {
+      final response = await request.post(
+        '${ApiConstants.baseUrl}/chat/api/create-chat-with-user/$userId/',
+        {},
+      );
+
+      if (response['success'] == true) {
+        return {
+          'success': true,
+          'session_id': response['session_id'],
+          'other_user': response['other_user'],
+          'message': response['message'] ?? 'Chat session created',
+        };
+      }
+
+      return {
+        'success': false,
+        'error': response['error'] ?? 'Failed to create chat session',
+      };
+    } catch (e) {
+      return {'success': false, 'error': 'Network error: ${e.toString()}'};
+    }
+  }
+
   static Future<Map<String, dynamic>> createAttachment({
     required String sessionId,
     required int messageId,
