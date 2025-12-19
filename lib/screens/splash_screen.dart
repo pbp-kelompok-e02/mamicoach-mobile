@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/home_page.dart';
 
@@ -24,6 +26,11 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+
+    // Load user data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().loadUser();
+    });
 
     _breathingController = AnimationController(
       duration: const Duration(milliseconds: 500),
