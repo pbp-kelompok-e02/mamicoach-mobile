@@ -65,6 +65,32 @@ class ReplyToMessage {
   }
 }
 
+class PreSendAttachment {
+  final String type; // 'course' | 'booking'
+  final int id;
+  final String? title;
+
+  const PreSendAttachment._({
+    required this.type,
+    required this.id,
+    this.title,
+  });
+
+  factory PreSendAttachment.course({
+    required int courseId,
+    required String title,
+  }) {
+    return PreSendAttachment._(type: 'course', id: courseId, title: title);
+  }
+
+  factory PreSendAttachment.booking({
+    required int bookingId,
+    String? title,
+  }) {
+    return PreSendAttachment._(type: 'booking', id: bookingId, title: title);
+  }
+}
+
 class ChatAttachment {
   final String id;
   final String type;

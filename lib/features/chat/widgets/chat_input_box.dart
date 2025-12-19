@@ -5,6 +5,7 @@ class ChatInputBox extends StatefulWidget {
   final Function(String) onSend;
   final VoidCallback? onAttachment;
   final bool hasPendingAttachments;
+  final String? initialText;
   final ChatMessage? replyTo;
   final VoidCallback? onClearReply;
 
@@ -13,6 +14,7 @@ class ChatInputBox extends StatefulWidget {
     required this.onSend,
     this.onAttachment,
     this.hasPendingAttachments = false,
+    this.initialText,
     this.replyTo,
     this.onClearReply,
   });
@@ -24,11 +26,22 @@ class ChatInputBox extends StatefulWidget {
 class _ChatInputBoxState extends State<ChatInputBox> {
   final TextEditingController _controller = TextEditingController();
   bool _canSend = false;
+  bool _didApplyInitialText = false;
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_updateSendButton);
+
+    final initial = widget.initialText;
+    if (initial != null && initial.trim().isNotEmpty) {
+      _didApplyInitialText = true;
+      _controller.text = initial;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+      _canSend = _controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
+    }
   }
 
   @override
@@ -36,6 +49,19 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.hasPendingAttachments != widget.hasPendingAttachments) {
       _updateSendButton();
+    }
+
+    // Apply initialText only once and only when the input is still empty.
+    if (!_didApplyInitialText && oldWidget.initialText != widget.initialText) {
+      final initial = widget.initialText;
+      if ((_controller.text.trim().isEmpty) && initial != null && initial.trim().isNotEmpty) {
+        _didApplyInitialText = true;
+        _controller.text = initial;
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
+        _updateSendButton();
+      }
     }
   }
 

@@ -245,6 +245,84 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
     }
   }
 
+  Future<void> _deleteReview() async {
+    if (!_isEditMode) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Review'),
+        content: const Text('Review yang dihapus tidak dapat dikembalikan. Lanjutkan?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(color: Color(0xFFDC2626)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final result = await ReviewService.deleteReview(
+        reviewId: widget.review!.id,
+        request: request,
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Review deleted successfully'),
+            backgroundColor: const Color(0xFF35A753),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, {
+          'deleted': true,
+          'review_id': widget.review!.id,
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to delete review'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete review: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -535,6 +613,30 @@ class _ReviewFormScreenState extends State<ReviewFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
+            if (_isEditMode) ...[
+              SizedBox(
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : _deleteReview,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFDC2626)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Hapus Review',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Cancel Button
             SizedBox(
