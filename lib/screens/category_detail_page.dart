@@ -307,7 +307,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             MaterialPageRoute(
               builder: (context) => CourseDetailPage(courseId: course.id),
             ),
-          );
+          ).then((_) => setState(() {}));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

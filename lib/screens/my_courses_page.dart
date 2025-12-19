@@ -9,8 +9,11 @@ import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_const
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/widgets/custom_refresh_indicator.dart';
+import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
+import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'dart:io';
 
 class MyCoursesPage extends StatefulWidget {
   const MyCoursesPage({super.key});
@@ -25,6 +28,8 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
   Map<String, dynamic>? _pagination;
   bool _isInitialLoading = true;
   bool _isRefreshing = false;
+  String? _errorMessage;
+  bool _isConnectionError = false;
 
   @override
   void initState() {
@@ -60,6 +65,9 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
         setState(() {
           _isInitialLoading = false;
           _isRefreshing = false;
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isConnectionError = e.toString().contains('SocketException') || 
+                              e.toString().contains('Connection closed');
         });
       }
     }
@@ -119,58 +127,38 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                     child: ShimmerPlaceholder(width: double.infinity, height: 200),
                   ),
                 )
-              : _courses.isEmpty
-                  ? ListView(
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                  : _errorMessage != null
+                      ? CommonErrorWidget(
+                          message: _errorMessage!,
+                          isConnectionError: _isConnectionError,
+                          onRetry: () {
+                            setState(() {
+                              _isInitialLoading = true;
+                              _errorMessage = null;
+                            });
+                            _loadCourses();
+                          },
+                        )
+                      : _courses.isEmpty
+                          ? CommonEmptyWidget(
+                              title: 'Anda belum membuat kelas apapun',
+                              message: 'Mulai bagikan pengetahuan Anda dengan membuat kelas baru',
+                              icon: Icons.school_outlined,
+                              actionLabel: 'Buat Kelas',
+                              onAction: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CourseFormPage(),
+                                  ),
+                                );
+                                _currentPage = 1;
+                                _loadCourses();
+                              },
+                            )
+                          : Stack(
                               children: [
-                                Icon(
-                                  Icons.school_outlined,
-                                  size: 64,
-                                  color: AppColors.darkGrey,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Anda belum membuat kelas apapun.',
-                                  style: TextStyle(
-                                    fontFamily: 'Quicksand',
-                                    fontSize: 16,
-                                    color: AppColors.darkGrey,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const CourseFormPage(),
-                                      ),
-                                    );
-                                    _currentPage = 1;
-                                    _loadCourses();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryGreen,
-                                  ),
-                                  child: const Text(
-                                    'Buat Kelas',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Stack(
-                      children: [
-                        Column(
+                                Column(
                       children: [
                         // Schedule Management Button
                         Container(
@@ -330,7 +318,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
             MaterialPageRoute(
               builder: (context) => CourseDetailPage(courseId: course.id),
             ),
-          ).then((_) => setState(() {}));
+          ).then((_) => _loadCourses(isRefresh: true));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

@@ -8,8 +8,11 @@ import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/widgets/custom_refresh_indicator.dart';
+import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
+import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'dart:io';
 
 class CoachesListPage extends StatefulWidget {
   const CoachesListPage({super.key});
@@ -29,6 +32,8 @@ class _CoachesListPageState extends State<CoachesListPage> {
   Map<String, dynamic>? _pagination;
   bool _isInitialLoading = true;
   bool _isRefreshing = false;
+  String? _errorMessage;
+  bool _isConnectionError = false;
 
   @override
   void initState() {
@@ -57,6 +62,9 @@ class _CoachesListPageState extends State<CoachesListPage> {
         setState(() {
           _isInitialLoading = false;
           _isRefreshing = false;
+          _errorMessage = e.toString();
+          _isConnectionError = e.toString().contains('SocketException') || 
+                              e.toString().contains('Connection closed');
         });
       }
     }
@@ -331,38 +339,32 @@ class _CoachesListPageState extends State<CoachesListPage> {
                         child: ShimmerPlaceholder(width: double.infinity, height: 200),
                       ),
                     )
-                  : _coaches.isEmpty
-                      ? ListView(
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.5,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.person_search,
-                                      size: 64,
-                                      color: AppColors.darkGrey,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Tidak ada coach ditemukan',
-                                      style: TextStyle(
-                                        fontFamily: 'Quicksand',
-                                        fontSize: 16,
-                                        color: AppColors.darkGrey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                  : _errorMessage != null
+                      ? CommonErrorWidget(
+                          message: _errorMessage!,
+                          isConnectionError: _isConnectionError,
+                          onRetry: () {
+                            setState(() {
+                              _isInitialLoading = true;
+                              _errorMessage = null;
+                            });
+                            _loadCoaches();
+                          },
                         )
-                      : Stack(
-                          children: [
-                            Column(
+                      : _coaches.isEmpty
+                          ? CommonEmptyWidget(
+                              title: 'Tidak ada coach ditemukan',
+                              message: 'Coba ubah filter atau kata kunci pencarian Anda',
+                              icon: Icons.person_search,
+                              actionLabel: 'Hapus Filter',
+                              onAction: _resetFilters,
+                            )
+                          : Stack(
+                              children: [
+                                Column(
+                                  children: [
+                                    Expanded(
+                                      child: GridView.builder(
                           children: [
                             Expanded(
                               child: GridView.builder(
@@ -491,7 +493,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
           MaterialPageRoute(
             builder: (context) => CoachDetailPage(coachId: coach.id),
           ),
-        ).then((_) => setState(() {}));
+        ).then((_) => _loadCoaches(isRefresh: true));
       },
       child: Card(
         elevation: 2,

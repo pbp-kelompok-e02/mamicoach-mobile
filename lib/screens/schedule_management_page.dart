@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/coach_availability.dart';
 import 'package:mamicoach_mobile/services/schedule_service.dart';
+import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
+import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 
 class ScheduleManagementPage extends StatefulWidget {
   const ScheduleManagementPage({super.key});
@@ -21,6 +24,7 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
   List<DateTime> _datesWithAvailability = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isConnectionError = false;
 
   @override
   void initState() {
@@ -58,6 +62,8 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isConnectionError = e.toString().contains('SocketException') || 
+                            e.toString().contains('Connection closed');
         _isLoading = false;
       });
     }
@@ -477,29 +483,10 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
   Widget _buildContent() {
     if (_errorMessage != null && _availabilities.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _loadAvailabilities,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Coba Lagi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-              ),
-            ),
-          ],
+        child: CommonErrorWidget(
+          message: _errorMessage!,
+          isConnectionError: _isConnectionError,
+          onRetry: _loadAvailabilities,
         ),
       );
     }
@@ -739,41 +726,14 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
           // List Content
           Expanded(
             child: displayAvailabilities.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.event_available,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _selectedDay != null
-                                ? 'Tidak ada jadwal pada tanggal ini'
-                                : 'Belum ada jadwal ketersediaan',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Klik tombol "Tambah Jadwal Baru" untuk menambah jadwal',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+                ? CommonEmptyWidget(
+                    title: _selectedDay != null
+                        ? 'Tidak ada jadwal'
+                        : 'Belum ada jadwal',
+                    message: _selectedDay != null
+                        ? 'Tidak ada jadwal pada tanggal ini'
+                        : 'Klik tombol "Tambah Jadwal Baru" untuk menambah jadwal',
+                    icon: Icons.event_available,
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),

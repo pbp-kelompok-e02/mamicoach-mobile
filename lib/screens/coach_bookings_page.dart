@@ -3,8 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
+import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
+import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 
 class CoachBookingsPage extends StatefulWidget {
   const CoachBookingsPage({super.key});
@@ -17,7 +20,9 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
   late TabController _tabController;
   List<Booking> _allBookings = [];
   bool _isLoading = true;
+  bool _isLoading = true;
   String? _errorMessage;
+  bool _isConnectionError = false;
 
   final List<String> _tabs = ['Semua', 'Pending', 'Dibayar', 'Dikonfirmasi', 'Selesai'];
 
@@ -54,6 +59,8 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       if (mounted) {
         setState(() {
           _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isConnectionError = e.toString().contains('SocketException') || 
+                              e.toString().contains('Connection closed');
           _isLoading = false;
         });
       }
@@ -409,54 +416,10 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Gagal Memuat Booking',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _errorMessage ?? 'Terjadi kesalahan',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _loadBookings,
-              icon: const Icon(Icons.refresh),
-              label: const Text(
-                'Coba Lagi',
-                style: TextStyle(fontFamily: 'Quicksand'),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CommonErrorWidget(
+      message: _errorMessage ?? 'Terjadi kesalahan',
+      isConnectionError: _isConnectionError,
+      onRetry: _loadBookings,
     );
   }
 
@@ -484,42 +447,12 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
   Widget _buildEmptyState() {
     final selectedTab = _tabs[_tabController.index];
     
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_busy,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Tidak Ada Booking',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              selectedTab == 'Semua'
-                  ? 'Belum ada booking masuk'
-                  : 'Tidak ada booking dengan status $selectedTab',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return CommonEmptyWidget(
+      title: 'Tidak Ada Booking',
+      message: selectedTab == 'Semua'
+          ? 'Belum ada booking masuk'
+          : 'Tidak ada booking dengan status $selectedTab',
+      icon: Icons.event_busy,
     );
   }
 

@@ -9,8 +9,11 @@ import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
+import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'dart:io';
 
 class ClassesPage extends StatefulWidget {
   final String? categoryFilter;
@@ -223,7 +226,7 @@ class _ClassesPageState extends State<ClassesPage> {
                                     builder: (context) =>
                                         CategoryDetailPage(category: category),
                                   ),
-                                );
+                                ).then((_) => setState(() {}));
                               },
                               child: Container(
                                 width: 100,
@@ -536,29 +539,32 @@ class _ClassesPageState extends State<ClassesPage> {
                   );
                 }
 
+                if (snapshot.hasError) {
+                  final error = snapshot.error;
+                  final isConnectionError = error.toString().contains('SocketException') || 
+                                          error.toString().contains('Connection closed');
+                  
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: CommonErrorWidget(
+                      message: error.toString().replaceAll('Exception: ', ''),
+                      isConnectionError: isConnectionError,
+                      onRetry: () {
+                        setState(() {});
+                      },
+                    ),
+                  );
+                }
+
                 if (!snapshot.hasData || snapshot.data['courses'].isEmpty) {
                   return SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.school_outlined,
-                            size: 64,
-                            color: AppColors.darkGrey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Tidak ada kelas ditemukan',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontSize: 16,
-                              color: AppColors.darkGrey,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: CommonEmptyWidget(
+                      title: 'Tidak ada kelas ditemukan',
+                      message: 'Coba ubah filter atau kata kunci pencarian Anda',
+                      icon: Icons.school_outlined,
+                      actionLabel: 'Hapus Filter',
+                      onAction: _resetFilters,
                     ),
                   );
                 }

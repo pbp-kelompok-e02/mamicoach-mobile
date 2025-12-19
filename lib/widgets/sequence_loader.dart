@@ -7,7 +7,7 @@ class SequenceLoader extends StatefulWidget {
 
   const SequenceLoader({
     super.key,
-    this.size = 40.0,
+    this.size = 50.0,
     this.color,
   });
 
@@ -18,7 +18,8 @@ class SequenceLoader extends StatefulWidget {
 class _SequenceLoaderState extends State<SequenceLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<int> _numberAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
@@ -28,10 +29,17 @@ class _SequenceLoaderState extends State<SequenceLoader>
       duration: const Duration(milliseconds: 1500),
     )..repeat();
 
-    _numberAnimation = IntTween(begin: 1, end: 5).animate(
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeInOut,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOut,
       ),
     );
   }
@@ -47,57 +55,48 @@ class _SequenceLoaderState extends State<SequenceLoader>
     final loaderColor = widget.color ?? AppColors.primaryGreen;
 
     return Center(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Animated number display
-              Container(
-                width: widget.size * 2,
-                height: widget.size * 2,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Pulse effect
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _opacityAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: loaderColor.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Center dot
+            Container(
+              width: widget.size * 0.4,
+              height: widget.size * 0.4,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: loaderColor,
+                boxShadow: [
+                  BoxShadow(
                     color: loaderColor.withOpacity(0.3),
-                    width: 3,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                child: Center(
-                  child: Text(
-                    '${_numberAnimation.value}',
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontSize: widget.size,
-                      fontWeight: FontWeight.bold,
-                      color: loaderColor,
-                    ),
-                  ),
-                ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Progress dots
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(5, (index) {
-                  final isActive = index < _numberAnimation.value;
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive
-                          ? loaderColor
-                          : loaderColor.withOpacity(0.2),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
