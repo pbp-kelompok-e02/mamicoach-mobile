@@ -7,9 +7,9 @@ import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/screens/booking_form_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -127,10 +127,13 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         return Scaffold(
           backgroundColor: Colors.white,
           body: snapshot.connectionState == ConnectionState.waiting
-              ? Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryGreen,
-                  ),
+              ? ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: const [
+                    ShimmerPlaceholder(width: double.infinity, height: 300),
+                    SizedBox(height: 16),
+                    ShimmerPlaceholder(width: double.infinity, height: 200),
+                  ],
                 )
               : !snapshot.hasData
               ? Center(

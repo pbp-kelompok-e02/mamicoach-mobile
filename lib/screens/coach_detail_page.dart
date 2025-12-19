@@ -5,6 +5,7 @@ import 'package:mamicoach_mobile/models/coach_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -51,8 +52,13 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
         future: fetchCoachDetail(request),
         builder: (context, AsyncSnapshot<CoachDetail> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [
+                ShimmerPlaceholder(width: double.infinity, height: 300),
+                SizedBox(height: 16),
+                ShimmerPlaceholder(width: double.infinity, height: 200),
+              ],
             );
           }
 

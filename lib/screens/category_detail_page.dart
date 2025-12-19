@@ -9,6 +9,7 @@ import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -190,9 +191,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               future: fetchCoursesByCategory(request),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryGreen,
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 3,
+                    itemBuilder: (context, index) => const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: ShimmerPlaceholder(width: double.infinity, height: 200),
                     ),
                   );
                 }
@@ -236,9 +240,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               future: fetchCoachesByCategory(request),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryGreen,
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 3,
+                    itemBuilder: (context, index) => const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: ShimmerPlaceholder(width: double.infinity, height: 200),
                     ),
                   );
                 }

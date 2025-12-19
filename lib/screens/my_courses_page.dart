@@ -7,6 +7,8 @@ import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/screens/schedule_management_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+import 'package:mamicoach_mobile/widgets/custom_refresh_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -19,6 +21,49 @@ class MyCoursesPage extends StatefulWidget {
 
 class _MyCoursesPageState extends State<MyCoursesPage> {
   int _currentPage = 1;
+  List<Course> _courses = [];
+  Map<String, dynamic>? _pagination;
+  bool _isInitialLoading = true;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  Future<void> _loadCourses({bool isRefresh = false}) async {
+    if (isRefresh) {
+      setState(() => _isRefreshing = true);
+    }
+    final request = context.read<CookieRequest>();
+    String url = '${api_constants.baseUrl}/api/my-courses/?page=$_currentPage';
+
+    try {
+      final response = await request.get(url);
+
+      if (response['success'] == true && mounted) {
+        List<Course> courses = [];
+        for (var d in response['data']) {
+          courses.add(Course.fromJson(d));
+        }
+        setState(() {
+          _courses = courses;
+          _pagination = response['pagination'];
+          _isInitialLoading = false;
+          _isRefreshing = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching my courses: $e');
+      if (mounted) {
+        setState(() {
+          _isInitialLoading = false;
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
 
   Future<Map<String, dynamic>> fetchMyCourses(CookieRequest request) async {
     String url = '${api_constants.baseUrl}/api/my-courses/?page=$_currentPage';
@@ -34,7 +79,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
         return {'courses': courses, 'pagination': response['pagination']};
       }
     } catch (e) {
-      print('Error fetching my courses: $e');
+      debugPrint('Error fetching my courses: $e');
     }
     return {'courses': [], 'pagination': null};
   }
@@ -53,89 +98,98 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
               context,
               MaterialPageRoute(builder: (context) => const CourseFormPage()),
             );
-            setState(() {
-              _currentPage = 1; // Refresh list
-            });
+            _currentPage = 1;
+            _loadCourses();
           },
           backgroundColor: AppColors.primaryGreen,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-        body: FutureBuilder(
-          future: fetchMyCourses(request),
-          builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(color: AppColors.primaryGreen),
-              );
-            }
-
-            if (!snapshot.hasData || snapshot.data['courses'].isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.school_outlined,
-                      size: 64,
-                      color: AppColors.darkGrey,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Anda belum membuat kelas apapun.',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontSize: 16,
-                        color: AppColors.darkGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CourseFormPage(),
+        body: CustomRefreshIndicator(
+          onRefresh: () async {
+            _currentPage = 1;
+            await _loadCourses(isRefresh: true);
+          },
+          color: AppColors.primaryGreen,
+          child: _isInitialLoading
+              ? ListView.builder(
+                  itemCount: 3,
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) => const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: ShimmerPlaceholder(width: double.infinity, height: 200),
+                  ),
+                )
+              : _courses.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.school_outlined,
+                                  size: 64,
+                                  color: AppColors.darkGrey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Anda belum membuat kelas apapun.',
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 16,
+                                    color: AppColors.darkGrey,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const CourseFormPage(),
+                                      ),
+                                    );
+                                    _currentPage = 1;
+                                    _loadCourses();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryGreen,
+                                  ),
+                                  child: const Text(
+                                    'Buat Kelas',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                        setState(() {
-                          _currentPage = 1;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                      ),
-                      child: const Text(
-                        'Buat Kelas',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            List<Course> courses = snapshot.data['courses'];
-            var pagination = snapshot.data['pagination'];
-
-            return Column(
-              children: [
-                // Schedule Management Button
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ScheduleManagementPage(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.calendar_today),
-                      label: const Text(
-                        'Atur Ketersediaan Saya',
+                        ),
+                      ],
+                    )
+                  : Stack(
+                      children: [
+                        Column(
+                      children: [
+                        // Schedule Management Button
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ScheduleManagementPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.calendar_today),
+                              label: const Text(
+                                'Atur Ketersediaan Saya',
                         style: TextStyle(
                           fontFamily: 'Quicksand',
                           fontWeight: FontWeight.bold,
@@ -157,15 +211,15 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: courses.length,
+                    itemCount: _courses.length,
                     itemBuilder: (context, index) {
-                      return _buildCourseCard(courses[index]);
+                      return _buildCourseCard(_courses[index]);
                     },
                   ),
                 ),
 
                 // Pagination
-                if (pagination != null)
+                if (_pagination != null)
                   Container(
                     padding: const EdgeInsets.all(16),
                     color: Colors.white,
@@ -173,11 +227,12 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         TextButton.icon(
-                          onPressed: pagination['has_previous']
+                          onPressed: _pagination!['has_previous']
                               ? () {
                                   setState(() {
                                     _currentPage--;
                                   });
+                                  _loadCourses();
                                 }
                               : null,
                           icon: const Icon(Icons.chevron_left),
@@ -187,18 +242,19 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                           ),
                         ),
                         Text(
-                          'Halaman ${pagination['current_page']} dari ${pagination['total_pages']}',
+                          'Halaman ${_pagination!['current_page']} dari ${_pagination!['total_pages']}',
                           style: const TextStyle(
                             fontFamily: 'Quicksand',
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         TextButton.icon(
-                          onPressed: pagination['has_next']
+                          onPressed: _pagination!['has_next']
                               ? () {
                                   setState(() {
                                     _currentPage++;
                                   });
+                                  _loadCourses();
                                 }
                               : null,
                           icon: const Icon(Icons.chevron_right),
@@ -211,8 +267,52 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
                     ),
                   ),
               ],
-            );
-          },
+            ),
+                        if (_isRefreshing)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Memperbarui data...',
+                                    style: TextStyle(
+                                      fontFamily: 'Quicksand',
+                                      fontSize: 14,
+                                      color: AppColors.darkGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
         ),
       ),
     );
@@ -230,7 +330,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
             MaterialPageRoute(
               builder: (context) => CourseDetailPage(courseId: course.id),
             ),
-          );
+          ).then((_) => setState(() {}));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

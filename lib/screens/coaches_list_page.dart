@@ -6,6 +6,8 @@ import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/widgets/main_layout.dart';
 import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+import 'package:mamicoach_mobile/widgets/custom_refresh_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -23,11 +25,41 @@ class _CoachesListPageState extends State<CoachesListPage> {
   String _sortBy = '-rating';
   int _currentPage = 1;
   List<CategoryModel> _categories = [];
+  List<Coach> _coaches = [];
+  Map<String, dynamic>? _pagination;
+  bool _isInitialLoading = true;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
+    _loadCoaches();
+  }
+
+  Future<void> _loadCoaches({bool isRefresh = false}) async {
+    if (isRefresh) {
+      setState(() => _isRefreshing = true);
+    }
+    final request = context.read<CookieRequest>();
+    try {
+      final data = await fetchCoaches(request);
+      if (mounted) {
+        setState(() {
+          _coaches = data['coaches'];
+          _pagination = data['pagination'];
+          _isInitialLoading = false;
+          _isRefreshing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isInitialLoading = false;
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -84,12 +116,14 @@ class _CoachesListPageState extends State<CoachesListPage> {
       _sortBy = '-rating';
       _currentPage = 1;
     });
+    _loadCoaches();
   }
 
   void _applySearch() {
     setState(() {
       _currentPage = 1;
     });
+    _loadCoaches();
   }
 
   @override
@@ -282,77 +316,86 @@ class _CoachesListPageState extends State<CoachesListPage> {
 
           // Content area
           Expanded(
-            child: FutureBuilder(
-              future: fetchCoaches(request),
-              builder: (context, AsyncSnapshot snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryGreen,
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data['coaches'].isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person_search,
-                          size: 64,
-                          color: AppColors.darkGrey,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Tidak ada coach ditemukan',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 16,
-                            color: AppColors.darkGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                List<Coach> coaches = snapshot.data['coaches'];
-                var pagination = snapshot.data['pagination'];
-
-                return Column(
-                  children: [
-                    Expanded(
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 0.75,
-                            ),
-                        itemCount: coaches.length,
-                        itemBuilder: (context, index) {
-                          return _buildCoachCard(coaches[index]);
-                        },
+            child: CustomRefreshIndicator(
+              onRefresh: () async {
+                _currentPage = 1;
+                await _loadCoaches(isRefresh: true);
+              },
+              color: AppColors.primaryGreen,
+              child: _isInitialLoading
+                  ? ListView.builder(
+                      itemCount: 5,
+                      padding: const EdgeInsets.all(16),
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: ShimmerPlaceholder(width: double.infinity, height: 200),
                       ),
-                    ),
-
-                    // Pagination
-                    if (pagination != null)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    )
+                  : _coaches.isEmpty
+                      ? ListView(
                           children: [
-                            TextButton.icon(
-                              onPressed: pagination['has_previous']
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.person_search,
+                                      size: 64,
+                                      color: AppColors.darkGrey,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Tidak ada coach ditemukan',
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontSize: 16,
+                                        color: AppColors.darkGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Stack(
+                          children: [
+                            Column(
+                          children: [
+                            Expanded(
+                              child: GridView.builder(
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.75,
+                                ),
+                                itemCount: _coaches.length,
+                                itemBuilder: (context, index) {
+                                  return _buildCoachCard(_coaches[index]);
+                                },
+                              ),
+                            ),
+
+                            // Pagination
+                            if (_pagination != null)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                color: Colors.white,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton.icon(
+                              onPressed: _pagination!['has_previous']
                                   ? () {
                                       setState(() {
                                         _currentPage--;
                                       });
+                                      _loadCoaches();
                                     }
                                   : null,
                               icon: const Icon(Icons.chevron_left),
@@ -362,18 +405,19 @@ class _CoachesListPageState extends State<CoachesListPage> {
                               ),
                             ),
                             Text(
-                              'Halaman ${pagination['current_page']} dari ${pagination['total_pages']}',
+                              'Halaman ${_pagination!['current_page']} dari ${_pagination!['total_pages']}',
                               style: const TextStyle(
                                 fontFamily: 'Quicksand',
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             TextButton.icon(
-                              onPressed: pagination['has_next']
+                              onPressed: _pagination!['has_next']
                                   ? () {
                                       setState(() {
                                         _currentPage++;
                                       });
+                                      _loadCoaches();
                                     }
                                   : null,
                               icon: const Icon(Icons.chevron_right),
@@ -386,8 +430,52 @@ class _CoachesListPageState extends State<CoachesListPage> {
                         ),
                       ),
                   ],
-                );
-              },
+                ),
+                            if (_isRefreshing)
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            AppColors.primaryGreen,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'Memperbarui data...',
+                                        style: TextStyle(
+                                          fontFamily: 'Quicksand',
+                                          fontSize: 14,
+                                          color: AppColors.darkGrey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
             ),
           ),
         ],
@@ -403,7 +491,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
           MaterialPageRoute(
             builder: (context) => CoachDetailPage(coachId: coach.id),
           ),
-        );
+        ).then((_) => setState(() {}));
       },
       child: Card(
         elevation: 2,

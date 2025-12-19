@@ -104,7 +104,6 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(

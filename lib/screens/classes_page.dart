@@ -8,6 +8,7 @@ import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -524,12 +525,13 @@ class _ClassesPageState extends State<ClassesPage> {
               future: fetchCourses(request),
               builder: (context, AsyncSnapshot snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryGreen,
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ShimmerPlaceholder(width: double.infinity, height: 200),
                       ),
+                      childCount: 5,
                     ),
                   );
                 }
@@ -635,7 +637,7 @@ class _ClassesPageState extends State<ClassesPage> {
             MaterialPageRoute(
               builder: (context) => CourseDetailPage(courseId: course.id),
             ),
-          );
+          ).then((_) => setState(() {}));
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

@@ -32,7 +32,6 @@ class _CourseFormPageState extends State<CourseFormPage> {
 
   int? _selectedCategoryId;
   List<CategoryModel> _categories = [];
-  bool _isLoading = false;
   bool _isFetchingCategories = true;
 
   @override
@@ -337,8 +336,6 @@ class _CourseFormPageState extends State<CourseFormPage> {
                           ),
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              setState(() => _isLoading = true);
-
                               final courseId =
                                   widget.courseDetail?.id ?? widget.course?.id;
                               final url = isEdit
@@ -362,8 +359,6 @@ class _CourseFormPageState extends State<CourseFormPage> {
                                       );
 
                                 if (mounted) {
-                                  setState(() => _isLoading = false);
-
                                   // Debug print
                                   print('Course creation response: $response');
 
@@ -419,7 +414,6 @@ class _CourseFormPageState extends State<CourseFormPage> {
                                 }
                               } catch (e) {
                                 if (mounted) {
-                                  setState(() => _isLoading = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
