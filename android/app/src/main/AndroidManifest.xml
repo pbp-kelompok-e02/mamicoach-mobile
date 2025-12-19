@@ -1,4 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Attachments: camera + gallery access (runtime prompts handled by plugins) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ media access -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 12 and below media access -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
     <application
         android:label="mamicoach_mobile"
         android:name="${applicationName}"
