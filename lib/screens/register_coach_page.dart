@@ -27,40 +27,63 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  
+
   bool _isLoading = false;
-  
+
   // Profile image
   File? _profileImage;
   String? _profileImageBase64;
   final ImagePicker _picker = ImagePicker();
-  
+
   // List untuk expertise
   final List<String> _selectedExpertise = [];
-  final List<String> _availableExpertise = [
-    'Fitness',
-    'Yoga',
-    'Pilates',
-    'Basketball',
-    'Football',
-    'Swimming',
-    'Tennis',
-    'Badminton',
-    'Martial Arts',
-    'Dance',
-    'Running',
-    'Cycling',
-    'Boxing',
-    'Gym Training',
-    'Personal Training',
-  ];
-  
+  List<String> _availableExpertise = [];
+  bool _isLoadingCategories = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchCategories();
+    });
+  }
+
+  Future<void> _fetchCategories() async {
+    final request = context.read<CookieRequest>();
+    try {
+      final response = await request.get(
+        '${ApiConstants.baseUrl}/api/categories/',
+      );
+      if (response['success'] == true && response['data'] is List) {
+        setState(() {
+          _availableExpertise = (response['data'] as List)
+              .map((e) => e['name'] as String)
+              .toList();
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          'Gagal mengambil daftar kategori: $e',
+        );
+      }
+    }
+  }
+
   // Certifications
   final List<Map<String, String>> _certifications = [];
   final TextEditingController _certNameController = TextEditingController();
   final TextEditingController _certUrlController = TextEditingController();
+
+  // ... (rest of methods)
 
   Future<void> _pickImage() async {
     try {
@@ -82,10 +105,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
       }
     } catch (e) {
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(
-          context,
-          'Gagal memilih gambar: $e',
-        );
+        SnackBarHelper.showErrorSnackBar(context, 'Gagal memilih gambar: $e');
       }
     }
   }
@@ -283,35 +303,43 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableExpertise.map((expertise) {
-                    final isSelected = _selectedExpertise.contains(expertise);
-                    return FilterChip(
-                      label: Text(
-                        expertise,
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          color: isSelected ? Colors.white : AppColors.black,
-                        ),
+                _isLoadingCategories
+                    ? const Center(child: CircularProgressIndicator())
+                    : Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _availableExpertise.map((expertise) {
+                          final isSelected = _selectedExpertise.contains(
+                            expertise,
+                          );
+                          return FilterChip(
+                            label: Text(
+                              expertise,
+                              style: TextStyle(
+                                fontFamily: 'Quicksand',
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.black,
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _selectedExpertise.add(expertise);
+                                } else {
+                                  _selectedExpertise.remove(expertise);
+                                }
+                              });
+                            },
+                            selectedColor: AppColors.primaryGreen,
+                            checkmarkColor: Colors.white,
+                            backgroundColor: AppColors.lightGrey.withOpacity(
+                              0.3,
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedExpertise.add(expertise);
-                          } else {
-                            _selectedExpertise.remove(expertise);
-                          }
-                        });
-                      },
-                      selectedColor: AppColors.primaryGreen,
-                      checkmarkColor: Colors.white,
-                      backgroundColor: AppColors.lightGrey.withOpacity(0.3),
-                    );
-                  }).toList(),
-                ),
                 const SizedBox(height: 24),
 
                 // Profile Image Section (Optional)
@@ -347,7 +375,8 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                             width: 2,
                           ),
                         ),
-                        child: _profileImage != null || _profileImageBase64 != null
+                        child:
+                            _profileImage != null || _profileImageBase64 != null
                             ? ClipOval(
                                 child: kIsWeb
                                     ? Image.memory(
@@ -372,14 +401,12 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                           decoration: BoxDecoration(
                             color: AppColors.primaryGreen,
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
-                            ),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: IconButton(
                             icon: Icon(
-                              _profileImage != null || _profileImageBase64 != null
+                              _profileImage != null ||
+                                      _profileImageBase64 != null
                                   ? Icons.edit
                                   : Icons.add_a_photo,
                               color: Colors.white,
@@ -397,10 +424,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                             decoration: BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              border: Border.all(color: Colors.white, width: 2),
                             ),
                             child: IconButton(
                               icon: const Icon(
@@ -441,7 +465,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Certification Input
                 Row(
                   children: [
@@ -508,7 +532,7 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Certifications List
                 if (_certifications.isNotEmpty)
                   Container(
@@ -561,7 +585,10 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 trailing: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: () => _removeCertification(index),
                                 ),
                               ),
@@ -622,72 +649,75 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
                         return;
                       }
 
-                              setState(() {
-                                _isLoading = true;
-                              });
+                      setState(() {
+                        _isLoading = true;
+                      });
 
-                              try {
-                                // Prepare request body
-                                final requestBody = {
-                                  'username': _usernameController.text,
-                                  'first_name': _firstNameController.text,
-                                  'last_name': _lastNameController.text,
-                                  'password1': _passwordController.text,
-                                  'password2': _confirmPasswordController.text,
-                                  'bio': _bioController.text,
-                                  'expertise': _selectedExpertise,
-                                  'certifications': _certifications,
-                                };
+                      try {
+                        // Prepare request body
+                        final requestBody = {
+                          'username': _usernameController.text,
+                          'first_name': _firstNameController.text,
+                          'last_name': _lastNameController.text,
+                          'password1': _passwordController.text,
+                          'password2': _confirmPasswordController.text,
+                          'bio': _bioController.text,
+                          'expertise': _selectedExpertise,
+                          'certifications': _certifications,
+                        };
 
-                                // Add profile_image only if provided
-                                if (_profileImageBase64 != null && _profileImageBase64!.isNotEmpty) {
-                                  requestBody['profile_image'] = 'data:image/jpeg;base64,$_profileImageBase64';
-                                }
+                        // Add profile_image only if provided
+                        if (_profileImageBase64 != null &&
+                            _profileImageBase64!.isNotEmpty) {
+                          requestBody['profile_image'] =
+                              'data:image/jpeg;base64,$_profileImageBase64';
+                        }
 
-                                // Ganti dengan URL backend Anda
-                                final response = await request.postJson(
-                                  "${ApiConstants.baseUrl}/auth/api_register_coach/",
-                                  jsonEncode(requestBody),
-                                );
+                        // Ganti dengan URL backend Anda
+                        final response = await request.postJson(
+                          "${ApiConstants.baseUrl}/auth/api_register_coach/",
+                          jsonEncode(requestBody),
+                        );
 
-                                setState(() {
-                                  _isLoading = false;
-                                });
+                        setState(() {
+                          _isLoading = false;
+                        });
 
-                                if (context.mounted) {
-                                  if (response['status'] == true) {
-                                    SnackBarHelper.showSuccessSnackBar(
-                                      context,
-                                      response['message'] ?? 'Registrasi coach berhasil!',
-                                    );
+                        if (context.mounted) {
+                          if (response['status'] == true) {
+                            SnackBarHelper.showSuccessSnackBar(
+                              context,
+                              response['message'] ??
+                                  'Registrasi coach berhasil!',
+                            );
 
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const LoginPage(),
-                                      ),
-                                    );
-                                  } else {
-                                    SnackBarHelper.showErrorSnackBar(
-                                      context,
-                                      response['message'] ?? 'Registrasi gagal!',
-                                    );
-                                  }
-                                }
-                              } catch (e) {
-                                setState(() {
-                                  _isLoading = false;
-                                });
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                            );
+                          } else {
+                            SnackBarHelper.showErrorSnackBar(
+                              context,
+                              response['message'] ?? 'Registrasi gagal!',
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        setState(() {
+                          _isLoading = false;
+                        });
 
-                                if (context.mounted) {
-                                  SnackBarHelper.showErrorSnackBar(
-                                    context,
-                                    'Terjadi kesalahan: $e',
-                                  );
-                                }
-                              }
-                            }
-                          },
+                        if (context.mounted) {
+                          SnackBarHelper.showErrorSnackBar(
+                            context,
+                            'Terjadi kesalahan: $e',
+                          );
+                        }
+                      }
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
 

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
+import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
+import 'package:mamicoach_mobile/features/review/models/reviews.dart';
+import 'package:mamicoach_mobile/features/review/screens/review_form_screen.dart';
+import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
 import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
@@ -8,7 +13,9 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
 class MyBookingsPage extends StatefulWidget {
-  const MyBookingsPage({super.key});
+  final int? initialBookingId;
+
+  const MyBookingsPage({super.key, this.initialBookingId});
 
   @override
   State<MyBookingsPage> createState() => _MyBookingsPageState();
@@ -17,6 +24,7 @@ class MyBookingsPage extends StatefulWidget {
 class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Booking> _allBookings = [];
+  Map<int, Review> _reviewByBookingId = {};
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -26,6 +34,12 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+
+    // If we came here from a chat booking attachment, jump to "Semua".
+    if (widget.initialBookingId != null) {
+      _tabController.index = 0;
+    }
+
     _loadBookings();
   }
 
@@ -44,12 +58,28 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
     try {
       final request = context.read<CookieRequest>();
       final bookings = await BookingService.getUserBookings(request);
+
+      // Load user's reviews (used to switch "Beri Review" vs "Update Review")
+      final myReviewsResult = await ReviewService.listMyReviews(request: request);
+      final Map<int, Review> reviewByBookingId = {};
+      if (myReviewsResult['success'] == true) {
+        final reviews = (myReviewsResult['reviews'] as List<Review>?) ?? const [];
+        for (final r in reviews) {
+          // bookingId is required; still guard for safety
+          if (r.bookingId > 0) {
+            reviewByBookingId[r.bookingId] = r;
+          }
+        }
+      }
       
       if (mounted) {
         setState(() {
           _allBookings = bookings;
+          _reviewByBookingId = reviewByBookingId;
           _isLoading = false;
         });
+
+        _openInitialBookingIfNeeded();
       }
     } catch (e) {
       if (mounted) {
@@ -59,6 +89,27 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
         });
       }
     }
+  }
+
+  void _openInitialBookingIfNeeded() {
+    final id = widget.initialBookingId;
+    if (id == null) return;
+
+    // Ensure we're on "Semua" so the item is present.
+    if (_tabController.index != 0) {
+      _tabController.animateTo(0);
+    }
+
+    final booking = _allBookings.where((b) => b.id == id).cast<Booking?>().firstWhere(
+          (b) => b != null,
+          orElse: () => null,
+        );
+    if (booking == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showBookingDetail(booking);
+    });
   }
 
   List<Booking> _getFilteredBookings() {
@@ -200,6 +251,38 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
 
     // If payment was completed, refresh the bookings
     if (result == true) {
+      _loadBookings();
+    }
+  }
+
+  Future<void> _openChatForBooking(Booking booking) async {
+    await ChatHelper.startChatWithCoach(
+      context: context,
+      coachId: booking.coachId,
+      coachName: booking.coachName,
+      preSendMessage:
+          'Halo Coach ${booking.coachName}, saya ingin bertanya terkait booking #${booking.id} untuk kelas "${booking.courseTitle}".',
+      preSendAttachment: PreSendAttachment.booking(
+        bookingId: booking.id,
+        title: booking.courseTitle,
+      ),
+    );
+  }
+
+  Future<void> _openReviewForBooking(Booking booking, {Review? existing}) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReviewFormScreen(
+          review: existing,
+          bookingId: existing == null ? booking.id : null,
+          courseId: existing == null ? booking.courseId : null,
+        ),
+      ),
+    );
+
+    // Refresh reviews after create/edit so button label stays accurate
+    if (mounted) {
       _loadBookings();
     }
   }
@@ -391,6 +474,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
     final statusColor = _getStatusColor(booking.status);
     final statusIcon = _getStatusIcon(booking.status);
     final canCancel = booking.status == 'pending';
+    final existingReview = _reviewByBookingId[booking.id];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -564,6 +648,63 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     ),
                 ],
               ),
+
+              if (booking.status == 'confirmed') ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openChatForBooking(booking),
+                    icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                    label: const Text(
+                      'Chat Coach',
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              if (booking.status == 'done') ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openReviewForBooking(
+                      booking,
+                      existing: existingReview,
+                    ),
+                    icon: const Icon(Icons.reviews, size: 18),
+                    label: Text(
+                      existingReview == null ? 'Beri Review' : 'Update Review',
+                      style: const TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

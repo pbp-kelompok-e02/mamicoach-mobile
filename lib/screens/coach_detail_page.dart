@@ -6,6 +6,9 @@ import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
+import 'package:mamicoach_mobile/features/review/widgets/coach_reviews_section.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -83,6 +86,8 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
           }
 
           CoachDetail coach = snapshot.data!;
+          final userProvider = context.watch<UserProvider>();
+          final isOwner = userProvider.username == coach.username;
 
           return SingleChildScrollView(
             child: Column(
@@ -199,6 +204,36 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
                             )
                             .toList(),
                       ),
+
+                      if (request.loggedIn && !isOwner) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => ChatHelper.startChatWithCoach(
+                              context: context,
+                              coachId: coach.id,
+                              coachName: coach.fullName,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.primaryGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text(
+                              'Chat Coach',
+                              style: TextStyle(
+                                fontFamily: 'Quicksand',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -338,6 +373,12 @@ class _CoachDetailPageState extends State<CoachDetailPage> {
                             ),
                     ],
                   ),
+                ),
+
+                const Divider(),
+
+                CoachReviewsSection(
+                  coachId: coach.id,
                 ),
               ],
             ),

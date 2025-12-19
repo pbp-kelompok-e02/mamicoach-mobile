@@ -14,28 +14,38 @@ import 'package:provider/provider.dart';
 
 class _PendingAttachment {
   final String name;
-  final String type; // 'image' | 'file'
-  final Uint8List bytes;
+  final String type; // 'image' | 'file' | 'course' | 'booking'
+  final Uint8List? bytes;
+  final int? courseId;
+  final int? bookingId;
   final int signature;
 
   const _PendingAttachment({
     required this.name,
     required this.type,
-    required this.bytes,
+    this.bytes,
+    this.courseId,
+    this.bookingId,
     required this.signature,
   });
 
   bool get isImage => type == 'image';
+  bool get isFileUpload => type == 'image' || type == 'file';
+  bool get isEmbed => type == 'course' || type == 'booking';
 }
 
 class ChatDetailScreen extends StatefulWidget {
   final String sessionId;
   final ChatUser otherUser;
+  final String? preSendMessage;
+  final PreSendAttachment? preSendAttachment;
 
   const ChatDetailScreen({
     super.key,
     required this.sessionId,
     required this.otherUser,
+    this.preSendMessage,
+    this.preSendAttachment,
   });
 
   @override
@@ -57,9 +67,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _addPendingPreSendAttachment(widget.preSendAttachment);
     _loadMessages();
     _startPolling();
     _setupScrollListener();
+  }
+
+  void _addPendingPreSendAttachment(PreSendAttachment? preSendAttachment) {
+    if (preSendAttachment == null) return;
+
+    final type = preSendAttachment.type;
+    if (type != 'course' && type != 'booking') return;
+
+    final signature = Object.hash('presend', type, preSendAttachment.id);
+    final alreadyAdded = _pendingAttachments.any((a) => a.signature == signature);
+    if (alreadyAdded) return;
+
+    _pendingAttachments.add(
+      _PendingAttachment(
+        name: preSendAttachment.title ?? (type == 'course'
+            ? 'Course #${preSendAttachment.id}'
+            : 'Booking #${preSendAttachment.id}'),
+        type: type,
+        courseId: type == 'course' ? preSendAttachment.id : null,
+        bookingId: type == 'booking' ? preSendAttachment.id : null,
+        signature: signature,
+      ),
+    );
   }
 
   @override
@@ -174,16 +208,35 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       int failedUploads = 0;
       for (final att in toUpload) {
-        final uploadResult = await ChatService.uploadFileAttachment(
-          sessionId: widget.sessionId,
-          messageId: sentMessage.id,
-          fileName: att.name,
-          bytes: att.bytes,
-          type: att.type,
-          request: request,
-        );
-        if (uploadResult['success'] != true) {
-          failedUploads += 1;
+        if (att.isFileUpload) {
+          final bytes = att.bytes;
+          if (bytes == null) {
+            failedUploads += 1;
+            continue;
+          }
+          final uploadResult = await ChatService.uploadFileAttachment(
+            sessionId: widget.sessionId,
+            messageId: sentMessage.id,
+            fileName: att.name,
+            bytes: bytes,
+            type: att.type,
+            request: request,
+          );
+          if (uploadResult['success'] != true) {
+            failedUploads += 1;
+          }
+        } else if (att.isEmbed) {
+          final createResult = await ChatService.createAttachment(
+            sessionId: widget.sessionId,
+            messageId: sentMessage.id,
+            type: att.type,
+            courseId: att.courseId,
+            bookingId: att.bookingId,
+            request: request,
+          );
+          if (createResult['success'] != true) {
+            failedUploads += 1;
+          }
         }
       }
 
@@ -353,43 +406,86 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
             return Stack(
               children: [
-                Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: att.isImage
-                        ? Image.memory(
-                            att.bytes,
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(child: Icon(Icons.broken_image));
-                            },
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.insert_drive_file, size: 24, color: Colors.grey),
-                                const SizedBox(height: 6),
-                                Text(
-                                  att.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 10, color: Colors.black87),
-                                ),
-                              ],
+                att.isEmbed
+                    ? Container(
+                        width: 170,
+                        height: 74,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              att.type == 'course' ? Icons.school : Icons.calendar_today,
+                              size: 22,
+                              color: att.type == 'course' ? Colors.purple[600] : Colors.blue[600],
                             ),
-                          ),
-                  ),
-                ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    att.type == 'course' ? 'Course' : 'Booking',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    att.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11, color: Colors.black87),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Container(
+                        width: 74,
+                        height: 74,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: att.isImage
+                              ? Image.memory(
+                                  att.bytes!,
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(child: Icon(Icons.broken_image));
+                                  },
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.insert_drive_file, size: 24, color: Colors.grey),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        att.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 10, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ),
                 Positioned(
                   top: 4,
                   right: 4,
@@ -480,6 +576,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             _buildPendingAttachmentsBar(),
             ChatInputBox(
               onSend: _sendMessage,
+              initialText: widget.preSendMessage,
               replyTo: _replyToMessage,
               onClearReply: _clearReply,
               hasPendingAttachments: _pendingAttachments.isNotEmpty,

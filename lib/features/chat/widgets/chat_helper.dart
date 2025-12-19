@@ -10,6 +10,8 @@ class ChatHelper {
     required BuildContext context,
     required int coachId,
     required String coachName,
+    String? preSendMessage,
+    PreSendAttachment? preSendAttachment,
   }) async {
     final request = context.read<CookieRequest>();
     
@@ -45,6 +47,8 @@ class ChatHelper {
           builder: (context) => ChatDetailScreen(
             sessionId: result['session_id'],
             otherUser: otherUser,
+            preSendMessage: preSendMessage,
+            preSendAttachment: preSendAttachment,
           ),
         ),
       );
@@ -66,6 +70,8 @@ class ChatHelper {
     IconData icon = Icons.chat,
     String label = 'Chat',
     bool isIconOnly = false,
+    String? preSendMessage,
+    PreSendAttachment? preSendAttachment,
   }) {
     return isIconOnly
         ? IconButton(
@@ -74,6 +80,8 @@ class ChatHelper {
               context: context,
               coachId: coachId,
               coachName: coachName,
+              preSendMessage: preSendMessage,
+              preSendAttachment: preSendAttachment,
             ),
             tooltip: label,
           )
@@ -82,6 +90,8 @@ class ChatHelper {
               context: context,
               coachId: coachId,
               coachName: coachName,
+              preSendMessage: preSendMessage,
+              preSendAttachment: preSendAttachment,
             ),
             icon: Icon(icon),
             label: Text(label),
@@ -92,12 +102,16 @@ class ChatHelper {
     required BuildContext context,
     required int coachId,
     required String coachName,
+    String? preSendMessage,
+    PreSendAttachment? preSendAttachment,
   }) {
     return FloatingActionButton(
       onPressed: () => startChatWithCoach(
         context: context,
         coachId: coachId,
         coachName: coachName,
+        preSendMessage: preSendMessage,
+        preSendAttachment: preSendAttachment,
       ),
       child: const Icon(Icons.chat),
     );

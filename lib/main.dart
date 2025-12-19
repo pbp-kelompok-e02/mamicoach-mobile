@@ -6,10 +6,16 @@ import 'package:mamicoach_mobile/screens/splash_screen.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:mamicoach_mobile/features/admin/providers/admin_provider.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
-import 'package:mamicoach_mobile/features/admin/providers/booking_provider.dart' as booking_p;
-import 'package:mamicoach_mobile/features/admin/providers/payment_provider.dart' as payment_p;
-import 'package:mamicoach_mobile/features/admin/providers/user_provider.dart' as admin_user_p;
+import 'package:mamicoach_mobile/features/admin/providers/booking_provider.dart'
+    as booking_p;
+import 'package:mamicoach_mobile/features/admin/providers/payment_provider.dart'
+    as payment_p;
+import 'package:mamicoach_mobile/features/admin/providers/user_provider.dart'
+    as admin_user_p;
 import 'package:mamicoach_mobile/features/admin/providers/coach_provider.dart';
+import 'package:mamicoach_mobile/core/network/auth_cookie_request.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +45,7 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         // CookieRequest provider for API calls
-        Provider<CookieRequest>(create: (_) => CookieRequest()),
+        Provider<CookieRequest>(create: (_) => AuthCookieRequest(navigatorKey)),
         // User provider
         ChangeNotifierProvider(create: (_) => UserProvider()),
         // Admin providers
@@ -52,6 +58,7 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp(
         title: 'MamiCoach',
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(

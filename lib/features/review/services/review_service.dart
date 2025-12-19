@@ -5,6 +5,84 @@ import 'package:mamicoach_mobile/features/review/models/reviews.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class ReviewService {
+  /// Public list of reviews for a course
+  /// GET /api/courses/<course_id>/reviews/?page=&page_size=
+  static Future<Map<String, dynamic>> listCourseReviews({
+    required CookieRequest request,
+    required int courseId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/courses/$courseId/reviews/').replace(
+        queryParameters: {
+          'page': page.toString(),
+          'page_size': pageSize.toString(),
+        },
+      );
+
+      final response = await request.get(uri.toString());
+
+      if (response['success'] == true) {
+        final rawReviews = (response['reviews'] as List?) ?? const [];
+        return {
+          'success': true,
+          'reviews_raw': rawReviews.whereType<Map<String, dynamic>>().toList(),
+          'pagination': response['pagination'],
+        };
+      }
+
+      return {
+        'success': false,
+        'error': response['error'] ?? 'Failed to fetch course reviews',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Public list of reviews for a coach
+  /// GET /api/coach/<coach_id>/reviews/?page=&page_size=
+  static Future<Map<String, dynamic>> listCoachReviews({
+    required CookieRequest request,
+    required int coachId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/coach/$coachId/reviews/').replace(
+        queryParameters: {
+          'page': page.toString(),
+          'page_size': pageSize.toString(),
+        },
+      );
+
+      final response = await request.get(uri.toString());
+
+      if (response['success'] == true) {
+        final rawReviews = (response['reviews'] as List?) ?? const [];
+        return {
+          'success': true,
+          'reviews_raw': rawReviews.whereType<Map<String, dynamic>>().toList(),
+          'pagination': response['pagination'],
+        };
+      }
+
+      return {
+        'success': false,
+        'error': response['error'] ?? 'Failed to fetch coach reviews',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
   /// List current user's reviews
   /// GET /review/ajax/list-my/?course_id=&booking_id=
   static Future<Map<String, dynamic>> listMyReviews({

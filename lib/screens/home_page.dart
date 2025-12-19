@@ -118,7 +118,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return MainLayout(
-      title: 'MamiCoach',
+      title: 'mamicoach',
       child: CustomRefreshIndicator(
         onRefresh: () => _loadAllData(isRefresh: true),
         color: AppColors.primaryGreen,

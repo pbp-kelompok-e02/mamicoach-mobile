@@ -4,12 +4,14 @@ import 'package:mamicoach_mobile/models/course_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
 import 'package:mamicoach_mobile/screens/category_detail_page.dart';
 import 'package:mamicoach_mobile/screens/course_form_page.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart'
-    as api_constants;
 import 'package:mamicoach_mobile/screens/booking_form_page.dart';
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
+import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
+import 'package:mamicoach_mobile/features/review/widgets/course_reviews_section.dart';
+import 'package:mamicoach_mobile/features/review/widgets/course_my_reviews_section.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -216,6 +218,9 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
   }
 
   Widget _buildCourseContent(CourseDetail course, CookieRequest request) {
+    final userProvider = context.watch<UserProvider>();
+    final isOwner = userProvider.username == course.coach.username;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,6 +442,42 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                   ),
                 ),
               ],
+
+              if (!isOwner) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => ChatHelper.startChatWithCoach(
+                      context: context,
+                      coachId: course.coach.id,
+                      coachName: course.coach.fullName,
+                      preSendMessage:
+                          'Halo Coach ${course.coach.fullName}, saya tertarik dengan kelas "${course.title}". Boleh tanya-tanya dulu?',
+                      preSendAttachment: PreSendAttachment.course(
+                        courseId: course.id,
+                        title: course.title,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text(
+                      'Chat Coach',
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -485,6 +526,20 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             ],
           ),
         ),
+
+        const Divider(),
+        CourseReviewsSection(
+          courseId: course.id,
+          courseTitle: course.title,
+        ),
+
+        if (!isOwner && request.loggedIn) ...[
+          const Divider(),
+          CourseMyReviewsSection(
+            courseId: course.id,
+            courseTitle: course.title,
+          ),
+        ],
 
         // Related courses
         if (course.relatedCourses.isNotEmpty) ...[
