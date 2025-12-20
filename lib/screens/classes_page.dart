@@ -635,10 +635,10 @@ class _ClassesPageState extends State<ClassesPage> {
                       sliver: SliverGrid(
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 400,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 0.5,
+                              maxCrossAxisExtent: 280,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.65,
                             ),
                         delegate: SliverChildBuilderDelegate((context, index) {
                           return _buildCourseCard(_courses[index]);
@@ -696,6 +696,7 @@ class _ClassesPageState extends State<ClassesPage> {
       margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -705,128 +706,140 @@ class _ClassesPageState extends State<ClassesPage> {
             ),
           ).then((_) => setState(() {}));
         },
-        borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail
+            // Thumbnail with category overlay
             Expanded(
               flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                ),
-                child: course.thumbnailUrl != null
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: ProxyNetworkImage(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  course.thumbnailUrl != null
+                      ? ProxyNetworkImage(
                           course.thumbnailUrl!,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (context) => Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 48,
-                              color: AppColors.darkGrey,
-                            ),
-                          ),
-                          errorWidget: (context, error) => Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 48,
-                              color: AppColors.darkGrey,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Icon(
-                          Icons.school,
-                          size: 48,
-                          color: AppColors.darkGrey,
-                        ),
-                      ),
-              ),
-            ),
-
-            // Course info
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Category
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CategoryDetailPage(
-                              category: CategoryModel(
-                                id: course.category.id,
-                                name: course.category.name,
-                                description: course.category.description,
-                                thumbnailUrl: course.category.thumbnailUrl,
-                                courseCount: 0,
+                          placeholder: (context) => Container(
+                            color: AppColors.lightGrey,
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 40,
+                                color: AppColors.darkGrey,
                               ),
                             ),
                           ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          course.category.name,
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 12,
-                            color: AppColors.primaryGreen,
-                            fontWeight: FontWeight.w600,
+                          errorWidget: (context, error) => Container(
+                            color: AppColors.lightGrey,
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 40,
+                                color: AppColors.darkGrey,
+                              ),
+                            ),
                           ),
+                        )
+                      : Container(
+                          color: AppColors.lightGrey,
+                          child: Center(
+                            child: Icon(
+                              Icons.school,
+                              size: 40,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        ),
+                  // Category badge
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        course.category.name,
+                        style: const TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontSize: 10,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                  ),
+                  // Price badge
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        course.priceFormatted,
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
+            // Course info - compact
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     // Title
                     Text(
                       course.title,
                       style: const TextStyle(
                         fontFamily: 'Quicksand',
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
-
+                    const Spacer(),
                     // Coach
                     Row(
                       children: [
-                        Icon(Icons.person, size: 16, color: AppColors.darkGrey),
+                        Icon(Icons.person, size: 12, color: AppColors.darkGrey),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             course.coach.fullName,
                             style: TextStyle(
                               fontFamily: 'Quicksand',
-                              fontSize: 14,
+                              fontSize: 11,
                               color: AppColors.darkGrey,
                             ),
                             maxLines: 1,
@@ -836,27 +849,26 @@ class _ClassesPageState extends State<ClassesPage> {
                         if (course.coach.verified)
                           Icon(
                             Icons.verified,
-                            size: 16,
+                            size: 12,
                             color: AppColors.primaryGreen,
                           ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
-                    // Rating, Duration, Price
+                    const SizedBox(height: 6),
+                    // Rating & Duration
                     Row(
                       children: [
                         Icon(
                           Icons.star,
-                          size: 16,
+                          size: 12,
                           color: AppColors.primaryGreen,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 2),
                         Text(
                           course.rating.toStringAsFixed(1),
                           style: const TextStyle(
                             fontFamily: 'Quicksand',
-                            fontSize: 14,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -864,34 +876,26 @@ class _ClassesPageState extends State<ClassesPage> {
                           ' (${course.ratingCount})',
                           style: TextStyle(
                             fontFamily: 'Quicksand',
-                            fontSize: 12,
+                            fontSize: 10,
                             color: AppColors.darkGrey,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 8),
                         Icon(
                           Icons.access_time,
-                          size: 16,
+                          size: 12,
                           color: AppColors.darkGrey,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          course.durationFormatted,
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 14,
-                            color: AppColors.darkGrey,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        Text(
-                          course.priceFormatted,
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryGreen,
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            course.durationFormatted,
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 11,
+                              color: AppColors.darkGrey,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
