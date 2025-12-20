@@ -8,6 +8,7 @@ import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
+import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -20,6 +21,19 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
   bool _emailNotifications = true;
   bool _darkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final enabled =
+        await PushNotificationService.instance.areChatPushNotificationsEnabled();
+    if (!mounted) return;
+    setState(() => _notificationsEnabled = enabled);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,10 +85,24 @@ class _SettingsPageState extends State<SettingsPage> {
               _buildSwitchTile(
                 icon: Icons.notifications_outlined,
                 title: 'Notifikasi Push',
-                subtitle: 'Terima pemberitahuan langsung',
+                subtitle: 'Notifikasi chat untuk pesan baru',
                 value: _notificationsEnabled,
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() => _notificationsEnabled = value);
+
+                  await PushNotificationService.instance
+                      .setChatPushNotificationsEnabled(value);
+
+                  // If user is currently logged in, sync backend token state.
+                  if (request.loggedIn == true) {
+                    if (value) {
+                      await PushNotificationService.instance
+                          .registerTokenWithBackend(request);
+                    } else {
+                      await PushNotificationService.instance
+                          .unregisterTokenWithBackend(request);
+                    }
+                  }
                 },
               ),
             ]),
@@ -411,6 +439,16 @@ class _SettingsPageState extends State<SettingsPage> {
     CookieRequest request,
   ) async {
     try {
+      // Best-effort: unregister device token BEFORE session logout, but only
+      // if chat notifications are enabled.
+      final enabled = await PushNotificationService.instance
+          .areChatPushNotificationsEnabled();
+      if (enabled) {
+        await PushNotificationService.instance.unregisterTokenWithBackend(
+          request,
+        );
+      }
+
       await request.logout('${api_constants.baseUrl}/auth/logout/');
       if (context.mounted) {
         context.read<UserProvider>().clearUser();

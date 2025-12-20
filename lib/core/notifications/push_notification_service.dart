@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
@@ -21,6 +22,8 @@ class PushNotificationService {
   static const String _defaultChannelId = 'mamicoach_chat';
   static const String _defaultChannelName = 'Chat';
   static const String _defaultChannelDescription = 'Chat message notifications';
+
+  static const String _chatPushEnabledPrefKey = 'chat_push_notifications_enabled';
 
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -64,6 +67,10 @@ class PushNotificationService {
       if (kDebugMode) {
         print('[Push] onTokenRefresh token=$token');
       }
+
+      // Best-effort: keep backend token in sync if user is logged in
+      // and chat notifications are enabled.
+      syncChatPushRegistrationWithBackend();
     });
 
     _initialized = true;
@@ -71,6 +78,37 @@ class PushNotificationService {
     if (kDebugMode) {
       final token = await FirebaseMessaging.instance.getToken();
       print('[Push] init complete token=$token');
+    }
+  }
+
+  Future<bool> areChatPushNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_chatPushEnabledPrefKey) ?? true;
+  }
+
+  Future<void> setChatPushNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_chatPushEnabledPrefKey, enabled);
+  }
+
+  /// Best-effort sync between local preference and backend token state.
+  ///
+  /// - If user is not logged in / no context yet: no-op.
+  /// - If enabled: register token.
+  /// - If disabled: unregister token.
+  Future<void> syncChatPushRegistrationWithBackend() async {
+    final navigatorKey = _navigatorKey;
+    final context = navigatorKey?.currentContext;
+    if (context == null) return;
+
+    final request = Provider.of<CookieRequest>(context, listen: false);
+    if (request.loggedIn != true) return;
+
+    final enabled = await areChatPushNotificationsEnabled();
+    if (enabled) {
+      await registerTokenWithBackend(request);
+    } else {
+      await unregisterTokenWithBackend(request);
     }
   }
 
