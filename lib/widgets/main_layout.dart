@@ -16,6 +16,7 @@ import 'package:mamicoach_mobile/screens/register_coach_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
 import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
 import 'package:mamicoach_mobile/screens/profile_page.dart';
+import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -223,6 +224,10 @@ class _MainLayoutState extends State<MainLayout> {
                                 );
                               } else if (value == 'logout') {
                                 try {
+                                  // Best-effort: unregister device token BEFORE session logout.
+                                  await PushNotificationService.instance
+                                      .unregisterTokenWithBackend(request);
+
                                   final response = await request.logout(
                                     "${ApiConstants.baseUrl}/auth/api_logout/",
                                   );

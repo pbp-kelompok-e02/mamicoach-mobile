@@ -31,16 +31,13 @@ class _ChatListState extends State<ChatList> {
   Widget build(BuildContext context) {
     if (widget.messages.isEmpty) {
       return const Center(
-        child: Text(
-          'No messages yet',
-          style: TextStyle(color: Colors.grey),
-        ),
+        child: Text('No messages yet', style: TextStyle(color: Colors.grey)),
       );
     }
 
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       itemCount: widget.messages.length,
       itemBuilder: (context, index) {
         final message = widget.messages[index];

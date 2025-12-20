@@ -153,6 +153,7 @@ class ChatService {
         return {
           'success': true,
           'session_id': response['session_id'],
+          if (response['other_user'] != null) 'other_user': response['other_user'],
           'message': response['message'] ?? 'Chat session created',
         };
       }
