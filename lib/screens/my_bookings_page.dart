@@ -474,6 +474,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
     final statusColor = _getStatusColor(booking.status);
     final statusIcon = _getStatusIcon(booking.status);
     final canCancel = booking.status == 'pending';
+    final canChatCoach = booking.status == 'pending' ||
+        booking.status == 'paid' ||
+        booking.status == 'confirmed';
     final existingReview = _reviewByBookingId[booking.id];
 
     return Card(
@@ -649,7 +652,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                 ],
               ),
 
-              if (booking.status == 'confirmed') ...[
+              if (canChatCoach) ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
