@@ -102,17 +102,20 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
       title: 'Kelas Saya',
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CourseFormPage()),
-            );
-            _currentPage = 1;
-            _loadCourses();
-          },
-          backgroundColor: AppColors.primaryGreen,
-          child: const Icon(Icons.add, color: Colors.white),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 60),
+          child: FloatingActionButton(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CourseFormPage()),
+              );
+              _currentPage = 1;
+              _loadCourses();
+            },
+            backgroundColor: AppColors.primaryGreen,
+            child: const Icon(Icons.add, color: Colors.white),
+          ),
         ),
         body: CustomRefreshIndicator(
           onRefresh: () async {

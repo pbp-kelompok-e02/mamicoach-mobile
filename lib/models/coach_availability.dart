@@ -1,3 +1,5 @@
+import 'package:mamicoach_mobile/utils/datetime_utils.dart';
+
 class CoachAvailability {
   final int id;
   final int coachId;
@@ -65,7 +67,13 @@ class CoachAvailability {
 
   bool get isActive => status == 'active';
 
-  bool get isPast => date.isBefore(DateTime.now());
+  bool get isPast {
+    // Combine date with start time
+    final startDateTime = DateTimeUtils.combineDateTime(date, startTime);
+    final now = DateTimeUtils.nowWIB();
+    // Schedule is past if start time has passed
+    return startDateTime.isBefore(now);
+  }
 
   CoachAvailability copyWith({
     int? id,
