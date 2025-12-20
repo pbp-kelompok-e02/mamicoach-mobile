@@ -14,77 +14,90 @@ class ChatDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final imageUrl = (otherUser.profileImageUrl != null &&
+            otherUser.profileImageUrl!.trim().isNotEmpty)
+        ? otherUser.profileImageUrl!.trim()
+        : null;
+
+    return Material(
+      color: colorScheme.surface,
+      elevation: 1,
       child: SafeArea(
         bottom: false,
-        child: Row(
-          children: [
-            if (onBack != null)
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: onBack,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              if (onBack != null)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: onBack,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Back',
+                ),
+              if (onBack != null) const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: colorScheme.primary,
+                backgroundImage:
+                    imageUrl != null ? proxyNetworkImageProvider(imageUrl) : null,
+                child: imageUrl == null
+                    ? Text(
+                        _getInitials(otherUser),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    : null,
               ),
-            if (onBack != null) const SizedBox(width: 12),
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Theme.of(context).primaryColor,
-                     backgroundImage: otherUser.profileImageUrl != null
-                       ? proxyNetworkImageProvider(otherUser.profileImageUrl!)
-                  : null,
-              child: otherUser.profileImageUrl == null
-                  ? Text(
-                      _getInitials(otherUser),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      otherUser.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    otherUser.displayName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
-                  ),
-                  Text(
-                    '@${otherUser.username}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                    const SizedBox(height: 2),
+                    Text(
+                      otherUser.username.isNotEmpty ? '@${otherUser.username}' : '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   String _getInitials(ChatUser user) {
-    final firstName = user.firstName.isNotEmpty ? user.firstName[0] : '';
-    final lastName = user.lastName.isNotEmpty ? user.lastName[0] : '';
-    return (firstName + lastName).toUpperCase();
+    final firstName = user.firstName.trim();
+    final lastName = user.lastName.trim();
+
+    final firstInitial = firstName.isNotEmpty ? firstName[0] : '';
+    final lastInitial = lastName.isNotEmpty ? lastName[0] : '';
+    final combined = (firstInitial + lastInitial).toUpperCase();
+    if (combined.isNotEmpty) return combined;
+
+    final username = user.username.trim();
+    if (username.isNotEmpty) return username[0].toUpperCase();
+    return '?';
   }
 }

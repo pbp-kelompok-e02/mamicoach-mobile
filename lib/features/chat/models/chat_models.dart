@@ -14,12 +14,17 @@ class ChatUser {
   });
 
   factory ChatUser.fromJson(Map<String, dynamic> json) {
+    final rawProfileUrl = json['profile_image_url']?.toString();
+    final cleanedProfileUrl = (rawProfileUrl != null && rawProfileUrl.trim().isNotEmpty)
+        ? rawProfileUrl.trim()
+        : null;
+
     return ChatUser(
-      id: json['id'],
-      username: json['username'] ?? '',
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
-      profileImageUrl: json['profile_image_url'],
+      id: (json['id'] as num).toInt(),
+      username: (json['username'] ?? '').toString(),
+      firstName: (json['first_name'] ?? '').toString(),
+      lastName: (json['last_name'] ?? '').toString(),
+      profileImageUrl: cleanedProfileUrl,
     );
   }
 

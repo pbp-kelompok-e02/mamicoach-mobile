@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "671775280090",
+    "project_id": "pbp-e02-mamicoach",
+    "storage_bucket": "pbp-e02-mamicoach.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671775280090:android:71ff98837030885bfd8ee3",
+        "android_client_info": {
+          "package_name": "com.example.mamicoach_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCppjWbSPVjIVtPI_LSK6smQE03-UuR61k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -44,13 +44,17 @@ class ChatHelper {
     Navigator.pop(context);
 
     if (result['success'] == true) {
-      final nameParts = coachName.split(' ');
-      final otherUser = ChatUser(
-        id: coachId,
-        username: coachName.toLowerCase().replaceAll(' ', '_'),
-        firstName: nameParts.first,
-        lastName: nameParts.skip(1).join(' '),
-      );
+      final otherUser = result['other_user'] != null
+          ? ChatUser.fromJson(result['other_user'] as Map<String, dynamic>)
+          : (() {
+              final nameParts = coachName.split(' ');
+              return ChatUser(
+                id: coachId,
+                username: 'coach_$coachId',
+                firstName: nameParts.first,
+                lastName: nameParts.skip(1).join(' '),
+              );
+            })();
 
       Navigator.push(
         context,
