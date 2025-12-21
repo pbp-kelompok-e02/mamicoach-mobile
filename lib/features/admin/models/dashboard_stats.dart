@@ -11,6 +11,8 @@ class DashboardStats {
   final List<ChartData> bookingsTrend;
   final List<ChartData> revenueTrend;
   final List<CategoryStats> topCategories;
+  final List<Map<String, dynamic>> recentBookings;
+  final List<Map<String, dynamic>> recentPayments;
 
   DashboardStats({
     required this.totalUsers,
@@ -24,6 +26,8 @@ class DashboardStats {
     required this.bookingsTrend,
     required this.revenueTrend,
     required this.topCategories,
+    required this.recentBookings,
+    required this.recentPayments,
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,14 @@ class DashboardStats {
               ?.map((e) => CategoryStats.fromJson(e))
               .toList() ??
           [],
+      recentBookings: (json['recent_bookings'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
+      recentPayments: (json['recent_payments'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
     );
   }
 
@@ -64,6 +76,8 @@ class DashboardStats {
       bookingsTrend: [],
       revenueTrend: [],
       topCategories: [],
+      recentBookings: [],
+      recentPayments: [],
     );
   }
 
@@ -93,6 +107,14 @@ class DashboardStats {
           [],
       topCategories: (data['top_categories'] as List<dynamic>?)
               ?.map((e) => CategoryStats.fromJson(e))
+              .toList() ??
+          [],
+      recentBookings: (data['recent_bookings'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          [],
+      recentPayments: (data['recent_payments'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
     );

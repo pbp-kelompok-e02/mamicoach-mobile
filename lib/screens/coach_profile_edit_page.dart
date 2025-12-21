@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class CoachProfileEditPage extends StatefulWidget {
   const CoachProfileEditPage({super.key});
@@ -32,6 +33,10 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
   Uint8List? _newProfileImageBytes;
   String? _profileImageBase64;
   final ImagePicker _picker = ImagePicker();
+
+  // Balance (withdrawable income)
+  final NumberFormat _idrFormatter = NumberFormat.decimalPattern('id');
+  String _balanceFormatted = '-';
 
   // Expertise
   final List<String> _selectedExpertise = [];
@@ -86,6 +91,12 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
           _lastNameController.text = profile['full_name']?.split(' ').skip(1).join(' ') ?? '';
           _bioController.text = profile['bio'] ?? '';
           _currentProfileImageUrl = profile['profile_image'];
+          final balance = profile['balance'];
+          if (balance is num) {
+            _balanceFormatted = 'Rp ${_idrFormatter.format(balance)}';
+          } else {
+            _balanceFormatted = '-';
+          }
           
           // Set expertise
           if (profile['expertise'] is List) {
@@ -523,13 +534,13 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const MainLayout(
-        title: 'Edit Profil Coach',
+        title: 'Edit Profil',
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
     return MainLayout(
-      title: 'Edit Profil Coach',
+      title: 'Edit Profil',
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -712,6 +723,8 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
                   return null;
                 },
               ),
+
+              const SizedBox(height: 24),
 
               const SizedBox(height: 24),
 

@@ -123,220 +123,288 @@ class _HomePageState extends State<HomePage> {
         onRefresh: () => _loadAllData(isRefresh: true),
         color: AppColors.primaryGreen,
         child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                    _buildHeroSection(context),
-                    const SizedBox(height: 24),
-                    _buildStatsSection(),
-                    const SizedBox(height: 32),
-                    _buildCategoriesSection(),
-                    const SizedBox(height: 32),
-                    _buildFeaturedCoursesSection(),
-                    const SizedBox(height: 32),
-                    _buildFeaturedCoachesSection(),
-                    const SizedBox(height: 40),
-                    // Admin access button
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AdminLoginScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.admin_panel_settings,
-                          size: 16,
-                          color: AppColors.grey,
-                        ),
-                        label: const Text(
-                          'Admin Panel',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Quicksand',
-                            color: AppColors.grey,
-                          ),
-                        ),
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Full-width Home Banner
+              _buildHeroSection(context),
+              const SizedBox(height: 24),
+              _buildStatsSection(),
+              const SizedBox(height: 32),
+              _buildCategoriesSection(),
+              const SizedBox(height: 32),
+              _buildHomeBanner(),
+              _buildFeaturedCoursesSection(),
+              const SizedBox(height: 32),
+              _buildFeaturedCoachesSection(),
+              const SizedBox(height: 40),
+              // Admin access button
+              Center(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminLoginScreen(),
                       ),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.admin_panel_settings,
+                    size: 16,
+                    color: AppColors.grey,
+                  ),
+                  label: const Text(
+                    'Admin Panel',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'Quicksand',
+                      color: AppColors.grey,
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeBanner() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/images/home_banner.png',
+        width: double.infinity,
+        fit: BoxFit.cover,
       ),
     );
   }
 
   Widget _buildHeroSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryGreen.withOpacity(0.1), Colors.white],
+    return Stack(
+      children: [
+        // Solid green background - fills entire area
+        Positioned.fill(child: Container(color: AppColors.primaryGreen)),
+        // Background image with fade effect on right side
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 0,
+          child: Opacity(
+            opacity: 0.3,
+            child: Image.asset(
+              'assets/images/register2.png',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Mulai Hidup Aktifmu Sekarang!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand',
-              color: AppColors.black,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Akses 100+ Kelas Olahraga dari Coach Terverifikasi di Seluruh Indonesia',
-            style: TextStyle(
-              fontSize: 16,
-              fontFamily: 'Quicksand',
-              color: AppColors.darkGrey,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Temukan gaya olahraga yang cocok buat kamu',
-            style: TextStyle(
-              fontSize: 14,
-              fontFamily: 'Quicksand',
-              color: AppColors.grey,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Search Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari kelas...',
-                hintStyle: TextStyle(
-                  fontFamily: 'Quicksand',
-                  color: AppColors.grey,
-                ),
-                border: InputBorder.none,
-                icon: Icon(Icons.search, color: AppColors.primaryGreen),
-              ),
-              onSubmitted: (value) {
-                // Navigate to search results or filter classes
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ClassesPage(searchQuery: value),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Buttons
-          Row(
+        // Content
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ClassesPage(),
+              // Welcome badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sports_tennis, color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Platform Olahraga #1 Indonesia',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 2,
-                    shadowColor: AppColors.primaryGreen.withOpacity(0.4),
-                  ),
-                  child: const Text(
-                    'Mulai Sekarang',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
+              const SizedBox(height: 20),
+
+              // Main title
+              const Text(
+                'Mulai Hidup\nSehat & Aktif\nBersama Coach\nTerbaik!',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand',
+                  color: Colors.white,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Subtitle
+              Text(
+                'Akses 100+ kelas olahraga dari coach terverifikasi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Quicksand',
+                  color: Colors.white.withOpacity(0.9),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Search Bar
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Cari kelas',
+                    hintStyle: TextStyle(
+                      fontFamily: 'Quicksand',
+                      color: AppColors.grey,
+                    ),
+                    border: InputBorder.none,
+                    icon: Icon(Icons.search, color: AppColors.primaryGreen),
+                  ),
+                  onSubmitted: (value) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ClassesPage(),
+                        builder: (context) => ClassesPage(searchQuery: value),
                       ),
                     );
                   },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(
-                      color: AppColors.primaryGreen,
-                      width: 1.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Jelajahi Kelas',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryGreen,
-                    ),
-                  ),
                 ),
+              ),
+              const SizedBox(height: 20),
+
+              // CTA Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ClassesPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow, size: 20),
+                      label: const Text(
+                        'Mulai Sekarang',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.primaryGreen,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CoachesListPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.person_search, size: 20),
+                      label: const Text(
+                        'Cari Coach',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(Icons.star, '5.0', 'Rating'),
-          _buildStatItem(Icons.people, '10k+', 'Users'),
-          _buildStatItem(Icons.verified, '100+', 'Coaches'),
+          _buildStatItem(Icons.star_rounded, '5.0', 'Rating'),
+          Container(width: 1, height: 40, color: AppColors.lightGrey),
+          _buildStatItem(Icons.people_alt_rounded, '10k+', 'Users'),
+          Container(width: 1, height: 40, color: AppColors.lightGrey),
+          _buildStatItem(Icons.verified_rounded, '100+', 'Coaches'),
         ],
       ),
     );
@@ -345,27 +413,21 @@ class _HomePageState extends State<HomePage> {
   Widget _buildStatItem(IconData icon, String value, String label) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.primaryGreen.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AppColors.primaryGreen, size: 24),
-        ),
+        Icon(icon, color: AppColors.primaryGreen, size: 28),
         const SizedBox(height: 8),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             fontFamily: 'Quicksand',
             color: AppColors.black,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontFamily: 'Quicksand',
             color: AppColors.grey,
@@ -385,19 +447,41 @@ class _HomePageState extends State<HomePage> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'Kategori',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Quicksand',
-              color: AppColors.black,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Kategori Populer',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Quicksand',
+                  color: AppColors.black,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClassesPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Lihat Semua',
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         SizedBox(
-          height: 120, // Increased height to prevent overflow
+          height: 100,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
@@ -415,51 +499,81 @@ class _HomePageState extends State<HomePage> {
                   ).then((_) => _loadAllData());
                 },
                 child: Container(
-                  width: 80,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: category.thumbnailUrl != null
-                            ? ClipOval(
-                                child: ProxyNetworkImage(
-                                  category.thumbnailUrl!,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context) => Icon(
-                                    Icons.category,
-                                    color: AppColors.primaryGreen,
-                                  ),
-                                  errorWidget: (context, error) => Icon(
-                                    Icons.category,
-                                    color: AppColors.primaryGreen,
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                Icons.category,
-                                color: AppColors.primaryGreen,
-                              ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category.name,
-                        style: const TextStyle(
-                          fontFamily: 'Quicksand',
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background image
+                        category.thumbnailUrl != null
+                            ? ProxyNetworkImage(
+                                category.thumbnailUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (context) =>
+                                    Container(color: AppColors.primaryGreen),
+                                errorWidget: (context, error) =>
+                                    Container(color: AppColors.primaryGreen),
+                              )
+                            : Container(color: AppColors.primaryGreen),
+                        // Dark overlay for text readability
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Content
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                category.name,
+                                style: const TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (category.courseCount > 0) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${category.courseCount} kelas',
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 11,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -479,93 +593,111 @@ class _HomePageState extends State<HomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Kelas Olahraga Paling Diminati',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Quicksand',
-                      color: AppColors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Temukan kelas-kelas terpopuler dari coach berpengalaman kami',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Quicksand',
-                      color: AppColors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 240,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _featuredCourses.length,
-                itemBuilder: (context, index) {
-                  final course = _featuredCourses[index];
-                  return Container(
-                    width: 180,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kelas Populer',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Quicksand',
+                        color: AppColors.black,
                       ),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  CourseDetailPage(courseId: course.id),
-                            ),
-                          ).then((_) => _loadAllData());
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Pilihan terbaik dari coach berpengalaman',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontFamily: 'Quicksand',
+                        color: AppColors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClassesPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Lihat Semua',
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 260,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: _featuredCourses.length,
+            itemBuilder: (context, index) {
+              final course = _featuredCourses[index];
+              return Container(
+                width: 200,
+                margin: const EdgeInsets.only(right: 12),
+                child: Card(
+                  elevation: 4,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CourseDetailPage(courseId: course.id),
+                        ),
+                      ).then((_) => _loadAllData());
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Thumbnail with overlays
+                        Stack(
                           children: [
-                            // Thumbnail
                             Container(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: AppColors.lightGrey,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(12),
-                                ),
-                              ),
+                              height: 120,
+                              width: double.infinity,
+                              color: AppColors.lightGrey,
                               child: course.thumbnailUrl != null
-                                  ? ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(12),
-                                      ),
-                                      child: ProxyNetworkImage(
-                                        course.thumbnailUrl!,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context) => Center(
-                                          child: Icon(
-                                            Icons.school,
-                                            color: AppColors.darkGrey,
-                                            size: 32,
-                                          ),
+                                  ? ProxyNetworkImage(
+                                      course.thumbnailUrl!,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context) => Center(
+                                        child: Icon(
+                                          Icons.school,
+                                          color: AppColors.darkGrey,
+                                          size: 32,
                                         ),
-                                        errorWidget: (context, error) => Center(
-                                          child: Icon(
-                                            Icons.school,
-                                            color: AppColors.darkGrey,
-                                            size: 32,
-                                          ),
+                                      ),
+                                      errorWidget: (context, error) => Center(
+                                        child: Icon(
+                                          Icons.school,
+                                          color: AppColors.darkGrey,
+                                          size: 32,
                                         ),
                                       ),
                                     )
@@ -577,63 +709,121 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    course.title,
-                                    style: const TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                            // Rating badge
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.star,
+                                      size: 12,
+                                      color: AppColors.warning,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.star,
-                                        size: 14,
-                                        color: AppColors.warning,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      course.rating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        course.rating.toStringAsFixed(1),
-                                        style: const TextStyle(
-                                          fontFamily: 'Quicksand',
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    course.priceFormatted,
-                                    style: TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontSize: 12,
-                                      color: AppColors.primaryGreen,
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                        // Content
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Category tag
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryGreen.withOpacity(
+                                      0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    course.category.name,
+                                    style: TextStyle(
+                                      fontFamily: 'Quicksand',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  course.title,
+                                  style: const TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Spacer(),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      course.coach.fullName,
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontSize: 11,
+                                        color: AppColors.darkGrey,
+                                      ),
+                                    ),
+                                    Text(
+                                      course.priceFormatted,
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontSize: 12,
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildFeaturedCoachesSection() {
@@ -713,82 +903,82 @@ class _HomePageState extends State<HomePage> {
                               color: AppColors.lightGrey,
                             ),
                             child: coach.profileImageUrl != null
-                                    ? ClipOval(
-                                        child: ProxyNetworkImage(
-                                          coach.profileImageUrl!,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context) => Icon(
-                                            Icons.person,
-                                            color: AppColors.darkGrey,
-                                          ),
-                                          errorWidget: (context, error) => Icon(
-                                            Icons.person,
-                                            color: AppColors.darkGrey,
-                                          ),
-                                        ),
-                                      )
-                                    : Icon(
+                                ? ClipOval(
+                                    child: ProxyNetworkImage(
+                                      coach.profileImageUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context) => Icon(
                                         Icons.person,
-                                        size: 30,
                                         color: AppColors.darkGrey,
                                       ),
+                                      errorWidget: (context, error) => Icon(
+                                        Icons.person,
+                                        color: AppColors.darkGrey,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.person,
+                                    size: 30,
+                                    color: AppColors.darkGrey,
+                                  ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            coach.fullName,
+                            style: const TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            coach.expertise.isNotEmpty
+                                ? coach.expertise.first
+                                : 'Coach',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 12,
+                              color: AppColors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                size: 14,
+                                color: AppColors.warning,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(width: 4),
                               Text(
-                                coach.fullName,
+                                coach.rating.toStringAsFixed(1),
                                 style: const TextStyle(
                                   fontFamily: 'Quicksand',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                coach.expertise.isNotEmpty
-                                    ? coach.expertise.first
-                                    : 'Coach',
-                                style: TextStyle(
-                                  fontFamily: 'Quicksand',
                                   fontSize: 12,
-                                  color: AppColors.grey,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    size: 14,
-                                    color: AppColors.warning,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    coach.rating.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -85,29 +85,43 @@ class AdminApiService {
 
   /// Refresh access token using refresh token
   Future<bool> refreshAccessToken() async {
-    if (_refreshToken == null) return false;
+    if (_refreshToken == null) {
+      debugPrint('[ADMIN API] ❌ Refresh token error: No refresh token available');
+      return false;
+    }
 
     try {
+      final url = '${ApiConstants.baseUrl}${ApiConstants.adminRefresh}';
+      debugPrint('[ADMIN API] 🔄 Refreshing access token: $url');
+      
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminRefresh}'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refresh_token': _refreshToken}),
       );
 
+      debugPrint('[ADMIN API] 📥 Refresh response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ℹ️ Refresh response data: ${data['status']}');
+        
         if (data['status'] == true) {
           _accessToken = data['data']['access_token'];
           _tokenExpiry = DateTime.now().add(
             Duration(seconds: data['data']['expires_in'] ?? ApiConstants.accessTokenExpirySeconds),
           );
           await saveTokens();
+          debugPrint('[ADMIN API] ✅ Token refreshed successfully');
           return true;
         }
+      } else {
+        debugPrint('[ADMIN API] ⚠️ Refresh failed with status: ${response.statusCode}');
+        debugPrint('[ADMIN API] ⚠️ Response body: ${response.body}');
       }
       return false;
     } catch (e) {
-      debugPrint('Refresh token error: $e');
+      debugPrint('[ADMIN API] ❌ Refresh token error: $e');
       return false;
     }
   }
@@ -132,8 +146,12 @@ class AdminApiService {
   /// Login admin user
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
+      final url = '${ApiConstants.baseUrl}${ApiConstants.adminLogin}';
+      debugPrint('[ADMIN API] 🔑 Login request: POST $url');
+      debugPrint('[ADMIN API] 📤 Username: $username');
+      
       final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminLogin}'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
@@ -141,7 +159,9 @@ class AdminApiService {
         }),
       );
 
+      debugPrint('[ADMIN API] 📥 Login response: ${response.statusCode}');
       final data = jsonDecode(response.body) as Map<String, dynamic>;
+      debugPrint('[ADMIN API] ℹ️ Login response status: ${data['status']}');
       
       if (response.statusCode == 200 && data['status'] == true) {
         // Save JWT tokens
@@ -152,11 +172,14 @@ class AdminApiService {
           expiresIn: tokenData['expires_in'] ?? ApiConstants.accessTokenExpirySeconds,
         );
         await saveTokens();
+        debugPrint('[ADMIN API] ✅ Login successful, tokens saved');
+      } else {
+        debugPrint('[ADMIN API] ❌ Login failed: ${data['message']}');
       }
       
       return data;
     } catch (e) {
-      debugPrint('Login error: $e');
+      debugPrint('[ADMIN API] ❌ Login error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',
@@ -191,22 +214,34 @@ class AdminApiService {
   /// Get dashboard statistics
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
+      final url = '${ApiConstants.baseUrl}${ApiConstants.adminDashboard}';
+      debugPrint('[ADMIN API] 📊 GET Dashboard Stats: $url');
+      debugPrint('[ADMIN API] 🔐 Has token: ${_accessToken != null}');
+      
       final response = await _authenticatedRequest(() => 
         http.get(
-          Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminDashboard}'),
+          Uri.parse(url),
           headers: _headers,
         ),
       );
 
+      debugPrint('[ADMIN API] 📥 Dashboard response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ✅ Dashboard stats fetched successfully');
+        return data;
       } else if (response.statusCode == 401) {
+        debugPrint('[ADMIN API] ❌ Dashboard auth failed (401)');
+        debugPrint('[ADMIN API] 📄 Response: ${response.body}');
         return {'status': false, 'message': 'Authentication required'};
       }
       
+      debugPrint('[ADMIN API] ⚠️ Dashboard fetch failed: ${response.statusCode}');
+      debugPrint('[ADMIN API] 📄 Response: ${response.body}');
       return {'status': false, 'message': 'Failed to fetch dashboard stats'};
     } catch (e) {
-      debugPrint('Dashboard stats error: $e');
+      debugPrint('[ADMIN API] ❌ Dashboard stats error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',
@@ -237,19 +272,29 @@ class AdminApiService {
       final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminBookings}')
           .replace(queryParameters: queryParams);
 
+      debugPrint('[ADMIN API] 📝 GET Bookings: $uri');
+      debugPrint('[ADMIN API] 🔍 Filters - status: $status, page: $page, search: $search');
+      
       final response = await _authenticatedRequest(() => 
         http.get(uri, headers: _headers),
       );
 
+      debugPrint('[ADMIN API] 📥 Bookings response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ✅ Bookings fetched successfully');
+        return data;
       } else if (response.statusCode == 401) {
+        debugPrint('[ADMIN API] ❌ Bookings auth failed (401)');
         return {'status': false, 'message': 'Authentication required'};
       }
       
+      debugPrint('[ADMIN API] ⚠️ Bookings fetch failed: ${response.statusCode}');
+      debugPrint('[ADMIN API] 📄 Response: ${response.body}');
       return {'status': false, 'message': 'Failed to fetch bookings'};
     } catch (e) {
-      debugPrint('Get bookings error: $e');
+      debugPrint('[ADMIN API] ❌ Get bookings error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',
@@ -368,19 +413,29 @@ class AdminApiService {
       final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminPayments}')
           .replace(queryParameters: queryParams);
 
+      debugPrint('[ADMIN API] 💳 GET Payments: $uri');
+      debugPrint('[ADMIN API] 🔍 Filters - status: $status, page: $page, search: $search');
+      
       final response = await _authenticatedRequest(() => 
         http.get(uri, headers: _headers),
       );
 
+      debugPrint('[ADMIN API] 📥 Payments response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ✅ Payments fetched successfully');
+        return data;
       } else if (response.statusCode == 401) {
+        debugPrint('[ADMIN API] ❌ Payments auth failed (401)');
         return {'status': false, 'message': 'Authentication required'};
       }
       
+      debugPrint('[ADMIN API] ⚠️ Payments fetch failed: ${response.statusCode}');
+      debugPrint('[ADMIN API] 📄 Response: ${response.body}');
       return {'status': false, 'message': 'Failed to fetch payments'};
     } catch (e) {
-      debugPrint('Get payments error: $e');
+      debugPrint('[ADMIN API] ❌ Get payments error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',
@@ -471,19 +526,29 @@ class AdminApiService {
       final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminUsers}')
           .replace(queryParameters: queryParams);
 
+      debugPrint('[ADMIN API] 👥 GET Users: $uri');
+      debugPrint('[ADMIN API] 🔍 Filters - status: $status, page: $page, search: $search');
+      
       final response = await _authenticatedRequest(() => 
         http.get(uri, headers: _headers),
       );
 
+      debugPrint('[ADMIN API] 📥 Users response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ✅ Users fetched successfully');
+        return data;
       } else if (response.statusCode == 401) {
+        debugPrint('[ADMIN API] ❌ Users auth failed (401)');
         return {'status': false, 'message': 'Authentication required'};
       }
       
+      debugPrint('[ADMIN API] ⚠️ Users fetch failed: ${response.statusCode}');
+      debugPrint('[ADMIN API] 📄 Response: ${response.body}');
       return {'status': false, 'message': 'Failed to fetch users'};
     } catch (e) {
-      debugPrint('Get users error: $e');
+      debugPrint('[ADMIN API] ❌ Get users error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',
@@ -514,19 +579,29 @@ class AdminApiService {
       final uri = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.adminCoaches}')
           .replace(queryParameters: queryParams);
 
+      debugPrint('[ADMIN API] 🎓 GET Coaches: $uri');
+      debugPrint('[ADMIN API] 🔍 Filters - status: $status, page: $page, search: $search');
+      
       final response = await _authenticatedRequest(() => 
         http.get(uri, headers: _headers),
       );
 
+      debugPrint('[ADMIN API] 📥 Coaches response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('[ADMIN API] ✅ Coaches fetched successfully');
+        return data;
       } else if (response.statusCode == 401) {
+        debugPrint('[ADMIN API] ❌ Coaches auth failed (401)');
         return {'status': false, 'message': 'Authentication required'};
       }
       
+      debugPrint('[ADMIN API] ⚠️ Coaches fetch failed: ${response.statusCode}');
+      debugPrint('[ADMIN API] 📄 Response: ${response.body}');
       return {'status': false, 'message': 'Failed to fetch coaches'};
     } catch (e) {
-      debugPrint('Get coaches error: $e');
+      debugPrint('[ADMIN API] ❌ Get coaches error: $e');
       return {
         'status': false,
         'message': 'Terjadi kesalahan koneksi: ${e.toString()}',

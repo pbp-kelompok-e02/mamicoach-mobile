@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/screens/splash_screen.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -14,11 +16,20 @@ import 'package:mamicoach_mobile/features/admin/providers/user_provider.dart'
     as admin_user_p;
 import 'package:mamicoach_mobile/features/admin/providers/coach_provider.dart';
 import 'package:mamicoach_mobile/core/network/auth_cookie_request.dart';
+import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
+import 'package:mamicoach_mobile/screens/errors/server_error_500_page.dart';
+import 'package:mamicoach_mobile/screens/errors/no_connection_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Android-only push notifications for now.
+  // If you run on Chrome/web, Firebase.initializeApp() needs explicit FirebaseOptions.
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+    await PushNotificationService.instance.init(navigatorKey: navigatorKey);
+  }
   await initializeDateFormatting('id', null);
   runApp(const MyApp());
 }
@@ -34,6 +45,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+
+    // If the app was opened from a notification tap (cold start),
+    // process it once the Navigator has a context.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!kIsWeb) {
+        PushNotificationService.instance.tryHandlePendingNavigation();
+      }
+    });
   }
 
   @override
@@ -56,6 +75,10 @@ class _MyAppState extends State<MyApp> {
         title: 'MamiCoach',
         navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
+        routes: {
+          ServerError500Page.routeName: (_) => const ServerError500Page(),
+          NoConnectionPage.routeName: (_) => const NoConnectionPage(),
+        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: AppColors.primaryGreen,

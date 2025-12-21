@@ -9,6 +9,7 @@ import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_details_header.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_list.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_input_box.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -31,9 +32,7 @@ class _PendingAttachment {
     this.isUploading = false,
   });
 
-  _PendingAttachment copyWith({
-    bool? isUploading,
-  }) {
+  _PendingAttachment copyWith({bool? isUploading}) {
     return _PendingAttachment(
       name: name,
       type: type,
@@ -74,6 +73,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   final List<_PendingAttachment> _pendingAttachments = [];
 
+  late ChatUser _headerOtherUser;
+  int? _currentUserId;
+
   bool _isLoading = true;
   bool _isSending = false;
   bool _didInitialOpenActions = false;
@@ -83,10 +85,78 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _headerOtherUser = widget.otherUser;
     _addPendingPreSendAttachment(widget.preSendAttachment);
     _loadMessages();
     _startPolling();
     _setupScrollListener();
+  }
+
+  ChatUser _mergeUserPreferNonEmpty(ChatUser base, ChatUser incoming) {
+    if (base.id != incoming.id) return incoming;
+
+    final mergedProfile =
+        (base.profileImageUrl != null &&
+            base.profileImageUrl!.trim().isNotEmpty)
+        ? base.profileImageUrl!.trim()
+        : ((incoming.profileImageUrl != null &&
+                  incoming.profileImageUrl!.trim().isNotEmpty)
+              ? incoming.profileImageUrl!.trim()
+              : null);
+
+    final mergedUsername = base.username.trim().isNotEmpty
+        ? base.username
+        : incoming.username;
+
+    final mergedFirstName = base.firstName.trim().isNotEmpty
+        ? base.firstName
+        : incoming.firstName;
+
+    final mergedLastName = base.lastName.trim().isNotEmpty
+        ? base.lastName
+        : incoming.lastName;
+
+    return ChatUser(
+      id: base.id,
+      username: mergedUsername,
+      firstName: mergedFirstName,
+      lastName: mergedLastName,
+      profileImageUrl: mergedProfile,
+    );
+  }
+
+  void _maybeResolveHeaderOtherUserFromMessages() {
+    if (_messages.isEmpty) return;
+
+    // Prefer server-provided current_user_id when available.
+    final myId = _currentUserId;
+
+    final counts = <int, int>{};
+    final usersById = <int, ChatUser>{};
+
+    for (final m in _messages) {
+      final sender = m.sender;
+      final senderId = sender.id;
+
+      // If current user id is unknown, use isSentByMe as a hint.
+      final isMe = myId != null ? senderId == myId : m.isSentByMe;
+      if (isMe) continue;
+
+      counts[senderId] = (counts[senderId] ?? 0) + 1;
+      usersById[senderId] = sender;
+    }
+
+    if (counts.isEmpty) return;
+
+    final bestId = counts.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+    final resolved = usersById[bestId];
+    if (resolved == null) return;
+
+    setState(() {
+      _headerOtherUser = _mergeUserPreferNonEmpty(_headerOtherUser, resolved);
+    });
   }
 
   void _addPendingPreSendAttachment(PreSendAttachment? preSendAttachment) {
@@ -96,14 +166,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     if (type != 'course' && type != 'booking') return;
 
     final signature = Object.hash('presend', type, preSendAttachment.id);
-    final alreadyAdded = _pendingAttachments.any((a) => a.signature == signature);
+    final alreadyAdded = _pendingAttachments.any(
+      (a) => a.signature == signature,
+    );
     if (alreadyAdded) return;
 
     _pendingAttachments.add(
       _PendingAttachment(
-        name: preSendAttachment.title ?? (type == 'course'
-            ? 'Course #${preSendAttachment.id}'
-            : 'Booking #${preSendAttachment.id}'),
+        name:
+            preSendAttachment.title ??
+            (type == 'course'
+                ? 'Course #${preSendAttachment.id}'
+                : 'Booking #${preSendAttachment.id}'),
         type: type,
         courseId: type == 'course' ? preSendAttachment.id : null,
         bookingId: type == 'booking' ? preSendAttachment.id : null,
@@ -121,7 +195,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   void _setupScrollListener() {
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= 
+      if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 100) {
         _markMessagesAsRead();
       }
@@ -153,10 +227,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
     if (result['success'] == true) {
       setState(() {
+        final currentUser = result['current_user_id'];
+        _currentUserId = currentUser is num
+            ? currentUser.toInt()
+            : _currentUserId;
         _messages.clear();
         _messages.addAll(result['messages'] as List<ChatMessage>);
         _isLoading = false;
       });
+
+      _maybeResolveHeaderOtherUserFromMessages();
 
       // Always run the initial open behavior once, even if the first
       // successful load comes from the polling path.
@@ -173,7 +253,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _isLoading = false;
       });
       if (!silent) {
-        _showSnackBar(result['error'] ?? 'Failed to load messages', isError: true);
+        _showSnackBar(
+          result['error'] ?? 'Failed to load messages',
+          isError: true,
+        );
       }
     }
   }
@@ -212,7 +295,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         setState(() {
           _isSending = false;
         });
-        _showSnackBar('Failed to send message (missing server response)', isError: true);
+        _showSnackBar(
+          'Failed to send message (missing server response)',
+          isError: true,
+        );
         return;
       }
 
@@ -220,7 +306,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       setState(() {
         _replyToMessage = null;
         for (var i = 0; i < _pendingAttachments.length; i++) {
-          _pendingAttachments[i] = _pendingAttachments[i].copyWith(isUploading: true);
+          _pendingAttachments[i] = _pendingAttachments[i].copyWith(
+            isUploading: true,
+          );
         }
       });
 
@@ -267,7 +355,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       _scrollToBottom();
 
       if (failedUploads > 0) {
-        _showSnackBar('$failedUploads attachment(s) failed to upload', isError: true);
+        _showSnackBar(
+          '$failedUploads attachment(s) failed to upload',
+          isError: true,
+        );
       }
     } else {
       setState(() {
@@ -280,9 +371,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _openAttachmentPicker() async {
     if (_isSending) return;
 
-    final isMobile = !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS);
+    final isMobile =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
 
     await showModalBottomSheet(
       context: context,
@@ -309,7 +401,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         bytes: bytes,
                       );
                     } catch (e) {
-                      _showSnackBar('Failed to open gallery: $e', isError: true);
+                      _showSnackBar(
+                        'Failed to open gallery: $e',
+                        isError: true,
+                      );
                     }
                   },
                 ),
@@ -350,13 +445,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     for (final f in result.files) {
                       final bytes = f.bytes;
                       if (bytes == null) {
-                        _showSnackBar('Failed to read file bytes for ${f.name}', isError: true);
+                        _showSnackBar(
+                          'Failed to read file bytes for ${f.name}',
+                          isError: true,
+                        );
                         continue;
                       }
 
                       final ext = (f.extension ?? '').toLowerCase();
-                      final isImage = <String>{'png', 'jpg', 'jpeg', 'gif', 'webp'}
-                          .contains(ext);
+                      final isImage = <String>{
+                        'png',
+                        'jpg',
+                        'jpeg',
+                        'gif',
+                        'webp',
+                      }.contains(ext);
 
                       _addPendingAttachment(
                         name: f.name,
@@ -390,7 +493,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
 
     setState(() {
-      final alreadyAdded = _pendingAttachments.any((a) => a.signature == signature);
+      final alreadyAdded = _pendingAttachments.any(
+        (a) => a.signature == signature,
+      );
       if (alreadyAdded) return;
       _pendingAttachments.add(
         _PendingAttachment(
@@ -414,10 +519,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     if (_pendingAttachments.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       color: Colors.white,
       child: SizedBox(
-        height: 74,
+        height: 62,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemBuilder: (context, index) {
@@ -427,9 +532,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               children: [
                 att.isEmbed
                     ? Container(
-                        width: 170,
-                        height: 74,
-                        padding: const EdgeInsets.all(10),
+                        width: 160,
+                        height: 62,
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
@@ -438,11 +543,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              att.type == 'course' ? Icons.school : Icons.calendar_today,
-                              size: 22,
-                              color: att.type == 'course' ? Colors.purple[600] : Colors.blue[600],
+                              att.type == 'course'
+                                  ? Icons.school
+                                  : Icons.calendar_today,
+                              size: 20,
+                              color: att.type == 'course'
+                                  ? Colors.purple[600]
+                                  : Colors.blue[600],
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -451,7 +560,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                   Text(
                                     att.type == 'course' ? 'Course' : 'Booking',
                                     style: const TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -460,7 +569,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                     att.name,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 11, color: Colors.black87),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.black87,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -469,8 +581,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         ),
                       )
                     : Container(
-                        width: 74,
-                        height: 74,
+                        width: 62,
+                        height: 62,
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
@@ -484,21 +596,30 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                   fit: BoxFit.cover,
                                   gaplessPlayback: true,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return const Center(child: Icon(Icons.broken_image));
+                                    return const Center(
+                                      child: Icon(Icons.broken_image),
+                                    );
                                   },
                                 )
                               : Padding(
-                                  padding: const EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(6),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.insert_drive_file, size: 24, color: Colors.grey),
-                                      const SizedBox(height: 6),
+                                      const Icon(
+                                        Icons.insert_drive_file,
+                                        size: 24,
+                                        color: Colors.grey,
+                                      ),
+                                      const SizedBox(height: 4),
                                       Text(
                                         att.name,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 10, color: Colors.black87),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.black87,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -512,13 +633,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     child: InkWell(
                       onTap: () => _removePendingAttachmentAt(index),
                       child: Container(
-                        width: 22,
-                        height: 22,
+                        width: 20,
+                        height: 20,
                         decoration: const BoxDecoration(
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -591,36 +716,39 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: Column(
-          children: [
-            ChatDetailsHeader(
-              otherUser: widget.otherUser,
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: _isLoading && _messages.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : ChatList(
-                      messages: _messages,
-                      onReply: _handleReply,
-                      scrollController: _scrollController,
-                    ),
-            ),
-            if (_isSending)
-              const LinearProgressIndicator(minHeight: 2),
-            _buildPendingAttachmentsBar(),
-            ChatInputBox(
-              onSend: _sendMessage,
-              initialText: widget.preSendMessage,
-              replyTo: _replyToMessage,
-              onClearReply: _clearReply,
-              hasPendingAttachments: _pendingAttachments.isNotEmpty,
-              isSending: _isSending,
-              onAttachment: _openAttachmentPicker,
-            ),
-          ],
+      // Putting the header in the appBar guarantees it always renders above
+      // the scrolling message list (no chat bubble can paint over it).
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: ChatDetailsHeader(
+          otherUser: _headerOtherUser,
+          onBack: () => Navigator.pop(context),
         ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isLoading && _messages.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : ChatList(
+                    messages: _messages,
+                    onReply: _handleReply,
+                    scrollController: _scrollController,
+                  ),
+          ),
+          const Divider(height: 1),
+          if (_isSending) const LinearProgressIndicator(minHeight: 2),
+          _buildPendingAttachmentsBar(),
+          ChatInputBox(
+            onSend: _sendMessage,
+            initialText: widget.preSendMessage,
+            replyTo: _replyToMessage,
+            onClearReply: _clearReply,
+            hasPendingAttachments: _pendingAttachments.isNotEmpty,
+            isSending: _isSending,
+            onAttachment: _openAttachmentPicker,
+          ),
+        ],
       ),
     );
   }
