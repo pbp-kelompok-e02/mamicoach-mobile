@@ -42,7 +42,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       _controller.selection = TextSelection.fromPosition(
         TextPosition(offset: _controller.text.length),
       );
-      _canSend = !widget.isSending &&
+      _canSend =
+          !widget.isSending &&
           (_controller.text.trim().isNotEmpty || widget.hasPendingAttachments);
     }
   }
@@ -61,7 +62,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     // Apply initialText only once and only when the input is still empty.
     if (!_didApplyInitialText && oldWidget.initialText != widget.initialText) {
       final initial = widget.initialText;
-      if ((_controller.text.trim().isEmpty) && initial != null && initial.trim().isNotEmpty) {
+      if ((_controller.text.trim().isEmpty) &&
+          initial != null &&
+          initial.trim().isNotEmpty) {
         _didApplyInitialText = true;
         _controller.text = initial;
         _controller.selection = TextSelection.fromPosition(
@@ -81,7 +84,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   void _updateSendButton() {
     setState(() {
       _canSend =
-          !widget.isSending && (_controller.text.trim().isNotEmpty || widget.hasPendingAttachments);
+          !widget.isSending &&
+          (_controller.text.trim().isNotEmpty || widget.hasPendingAttachments);
     });
   }
 
@@ -101,13 +105,13 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
+            blurRadius: 4,
             offset: const Offset(0, -2),
           ),
         ],
@@ -125,6 +129,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                     icon: const Icon(Icons.attach_file),
                     onPressed: widget.isSending ? null : widget.onAttachment,
                     color: Colors.grey[600],
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 40,
+                      height: 40,
+                    ),
                   ),
                 Expanded(
                   child: TextField(
@@ -147,8 +156,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                        horizontal: 16,
+                        vertical: 10,
                       ),
                     ),
                     maxLines: 5,
@@ -169,6 +178,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                     icon: const Icon(Icons.send),
                     onPressed: _canSend ? _handleSend : null,
                     color: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 44,
+                      height: 44,
+                    ),
                   ),
                 ),
               ],
@@ -182,15 +196,12 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Widget _buildReplyBanner() {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.blue[50],
         borderRadius: BorderRadius.circular(8),
         border: Border(
-          left: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 3,
-          ),
+          left: BorderSide(color: Theme.of(context).primaryColor, width: 3),
         ),
       ),
       child: Row(
@@ -203,17 +214,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                   'Replying to ${widget.replyTo!.sender.displayName}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 11,
                     color: Theme.of(context).primaryColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   widget.replyTo!.content,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
