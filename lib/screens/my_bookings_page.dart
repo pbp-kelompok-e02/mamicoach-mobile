@@ -9,6 +9,7 @@ import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
 import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -21,14 +22,21 @@ class MyBookingsPage extends StatefulWidget {
   State<MyBookingsPage> createState() => _MyBookingsPageState();
 }
 
-class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProviderStateMixin {
+class _MyBookingsPageState extends State<MyBookingsPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Booking> _allBookings = [];
   Map<int, Review> _reviewByBookingId = {};
   bool _isLoading = true;
   String? _errorMessage;
 
-  final List<String> _tabs = ['Semua', 'Pending', 'Dibayar', 'Selesai', 'Dibatalkan'];
+  final List<String> _tabs = [
+    'Semua',
+    'Pending',
+    'Dibayar',
+    'Selesai',
+    'Dibatalkan',
+  ];
 
   @override
   void initState() {
@@ -60,10 +68,13 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       final bookings = await BookingService.getUserBookings(request);
 
       // Load user's reviews (used to switch "Beri Review" vs "Update Review")
-      final myReviewsResult = await ReviewService.listMyReviews(request: request);
+      final myReviewsResult = await ReviewService.listMyReviews(
+        request: request,
+      );
       final Map<int, Review> reviewByBookingId = {};
       if (myReviewsResult['success'] == true) {
-        final reviews = (myReviewsResult['reviews'] as List<Review>?) ?? const [];
+        final reviews =
+            (myReviewsResult['reviews'] as List<Review>?) ?? const [];
         for (final r in reviews) {
           // bookingId is required; still guard for safety
           if (r.bookingId > 0) {
@@ -71,7 +82,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
           }
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _allBookings = bookings;
@@ -100,10 +111,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       _tabController.animateTo(0);
     }
 
-    final booking = _allBookings.where((b) => b.id == id).cast<Booking?>().firstWhere(
-          (b) => b != null,
-          orElse: () => null,
-        );
+    final booking = _allBookings
+        .where((b) => b.id == id)
+        .cast<Booking?>()
+        .firstWhere((b) => b != null, orElse: () => null);
     if (booking == null) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,19 +125,21 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
 
   List<Booking> _getFilteredBookings() {
     final selectedTab = _tabs[_tabController.index];
-    
+
     if (selectedTab == 'Semua') {
       return _allBookings;
     } else if (selectedTab == 'Pending') {
       return _allBookings.where((b) => b.status == 'pending').toList();
     } else if (selectedTab == 'Dibayar') {
-      return _allBookings.where((b) => b.status == 'paid' || b.status == 'confirmed').toList();
+      return _allBookings
+          .where((b) => b.status == 'paid' || b.status == 'confirmed')
+          .toList();
     } else if (selectedTab == 'Selesai') {
       return _allBookings.where((b) => b.status == 'done').toList();
     } else if (selectedTab == 'Dibatalkan') {
       return _allBookings.where((b) => b.status == 'canceled').toList();
     }
-    
+
     return _allBookings;
   }
 
@@ -209,7 +222,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       try {
         final request = context.read<CookieRequest>();
         await BookingService.cancelBooking(request, booking.id);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -269,7 +282,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
     );
   }
 
-  Future<void> _openReviewForBooking(Booking booking, {Review? existing}) async {
+  Future<void> _openReviewForBooking(
+    Booking booking, {
+    Review? existing,
+  }) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -328,21 +344,19 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       body: _isLoading
           ? _buildLoadingState()
           : _errorMessage != null
-              ? _buildErrorState()
-              : _buildBookingsList(),
+          ? _buildErrorState()
+          : _buildBookingsList(),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-          ),
-          SizedBox(height: 16),
-          Text(
+          const SequenceLoader(size: 60),
+          const SizedBox(height: 16),
+          const Text(
             'Memuat booking...',
             style: TextStyle(
               fontFamily: 'Quicksand',
@@ -362,11 +376,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.error_outline, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'Gagal Memuat Booking',
@@ -398,7 +408,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -430,18 +443,14 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
 
   Widget _buildEmptyState() {
     final selectedTab = _tabs[_tabController.index];
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.event_busy,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.event_busy, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'Tidak Ada Booking',
@@ -481,10 +490,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: statusColor.withOpacity(0.3),
-          width: 2,
-        ),
+        side: BorderSide(color: statusColor.withOpacity(0.3), width: 2),
       ),
       child: InkWell(
         onTap: () => _showBookingDetail(booking),
@@ -498,7 +504,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -506,11 +515,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          statusIcon,
-                          size: 16,
-                          color: statusColor,
-                        ),
+                        Icon(statusIcon, size: 16, color: statusColor),
                         const SizedBox(width: 6),
                         Text(
                           booking.statusDisplay,
@@ -556,11 +561,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
               // Coach
               Row(
                 children: [
-                  const Icon(
-                    Icons.person,
-                    size: 16,
-                    color: AppColors.darkGrey,
-                  ),
+                  const Icon(Icons.person, size: 16, color: AppColors.darkGrey),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -629,7 +630,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -667,7 +671,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -697,7 +704,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -738,7 +748,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Content
               Expanded(
                 child: ListView(
@@ -748,9 +758,14 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     // Status badge
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(booking.status).withOpacity(0.1),
+                          color: _getStatusColor(
+                            booking.status,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -791,43 +806,49 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
                     const SizedBox(height: 24),
 
                     // Course info
-                    _buildDetailSection(
-                      'Detail Kelas',
-                      [
-                        _buildDetailRow(Icons.class_, 'Nama Kelas', booking.courseTitle),
-                        _buildDetailRow(Icons.person, 'Coach', booking.coachName),
-                      ],
-                    ),
+                    _buildDetailSection('Detail Kelas', [
+                      _buildDetailRow(
+                        Icons.class_,
+                        'Nama Kelas',
+                        booking.courseTitle,
+                      ),
+                      _buildDetailRow(Icons.person, 'Coach', booking.coachName),
+                    ]),
                     const SizedBox(height: 20),
 
                     // Schedule info
-                    _buildDetailSection(
-                      'Jadwal',
-                      [
-                        _buildDetailRow(Icons.calendar_today, 'Tanggal', booking.dateFormatted),
-                        _buildDetailRow(Icons.access_time, 'Waktu', booking.timeFormatted),
-                      ],
-                    ),
+                    _buildDetailSection('Jadwal', [
+                      _buildDetailRow(
+                        Icons.calendar_today,
+                        'Tanggal',
+                        booking.dateFormatted,
+                      ),
+                      _buildDetailRow(
+                        Icons.access_time,
+                        'Waktu',
+                        booking.timeFormatted,
+                      ),
+                    ]),
                     const SizedBox(height: 20),
 
                     // Payment info
-                    _buildDetailSection(
-                      'Pembayaran',
-                      [
-                        _buildDetailRow(
-                          Icons.payment,
-                          'Total',
-                          'Rp ${NumberFormat('#,###', 'id_ID').format(booking.price)}',
-                          valueColor: AppColors.primaryGreen,
-                          valueBold: true,
-                        ),
-                        _buildDetailRow(
-                          Icons.schedule,
-                          'Dibuat',
-                          DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(booking.createdAt),
-                        ),
-                      ],
-                    ),
+                    _buildDetailSection('Pembayaran', [
+                      _buildDetailRow(
+                        Icons.payment,
+                        'Total',
+                        'Rp ${NumberFormat('#,###', 'id_ID').format(booking.price)}',
+                        valueColor: AppColors.primaryGreen,
+                        valueBold: true,
+                      ),
+                      _buildDetailRow(
+                        Icons.schedule,
+                        'Dibuat',
+                        DateFormat(
+                          'dd MMM yyyy, HH:mm',
+                          'id_ID',
+                        ).format(booking.createdAt),
+                      ),
+                    ]),
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -860,9 +881,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey[200]!),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -880,11 +899,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> with SingleTickerProvid
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: AppColors.primaryGreen,
-          ),
+          Icon(icon, size: 20, color: AppColors.primaryGreen),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -33,7 +34,10 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
     try {
       final request = context.read<CookieRequest>();
-      final booking = await BookingService.getBookingDetail(request, widget.bookingId);
+      final booking = await BookingService.getBookingDetail(
+        request,
+        widget.bookingId,
+      );
       if (!mounted) return;
       setState(() {
         _booking = booking;
@@ -100,40 +104,43 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+          ? const Center(child: SequenceLoader(size: 60))
+          : _error != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 72,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontFamily: 'Quicksand'),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(
+                        'Coba Lagi',
+                        style: TextStyle(fontFamily: 'Quicksand'),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
-          : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline, size: 72, color: Colors.grey[400]),
-                        const SizedBox(height: 12),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontFamily: 'Quicksand'),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _load,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Coba Lagi', style: TextStyle(fontFamily: 'Quicksand')),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : _buildBody(context),
+          : _buildBody(context),
     );
   }
 
@@ -146,7 +153,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       children: [
         Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -155,7 +164,10 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(8),
@@ -163,7 +175,11 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(_statusIcon(booking.status), size: 16, color: statusColor),
+                          Icon(
+                            _statusIcon(booking.status),
+                            size: 16,
+                            color: statusColor,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             booking.statusDisplay,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -38,14 +39,7 @@ class CustomButton extends StatelessWidget {
           disabledBackgroundColor: backgroundColor?.withOpacity(0.6),
         ),
         child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
+            ? const SequenceLoader(size: 20)
             : Text(
                 text,
                 style: const TextStyle(

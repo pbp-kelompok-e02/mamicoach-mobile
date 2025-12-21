@@ -8,6 +8,7 @@ import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
 import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -19,7 +20,8 @@ class CoachBookingsPage extends StatefulWidget {
   State<CoachBookingsPage> createState() => _CoachBookingsPageState();
 }
 
-class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTickerProviderStateMixin {
+class _CoachBookingsPageState extends State<CoachBookingsPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Booking> _allBookings = [];
   bool _isLoading = true;
@@ -27,7 +29,13 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
   String? _errorMessage;
   bool _isConnectionError = false;
 
-  final List<String> _tabs = ['Semua', 'Pending', 'Dibayar', 'Dikonfirmasi', 'Selesai'];
+  final List<String> _tabs = [
+    'Semua',
+    'Pending',
+    'Dibayar',
+    'Dikonfirmasi',
+    'Selesai',
+  ];
 
   @override
   void initState() {
@@ -51,7 +59,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     try {
       final request = context.read<CookieRequest>();
       final bookings = await BookingService.getCoachBookings(request);
-      
+
       if (mounted) {
         setState(() {
           _allBookings = bookings;
@@ -62,8 +70,9 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       if (mounted) {
         setState(() {
           _errorMessage = e.toString().replaceAll('Exception: ', '');
-          _isConnectionError = e.toString().contains('SocketException') || 
-                              e.toString().contains('Connection closed');
+          _isConnectionError =
+              e.toString().contains('SocketException') ||
+              e.toString().contains('Connection closed');
           _isLoading = false;
         });
       }
@@ -72,7 +81,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
 
   List<Booking> _getFilteredBookings() {
     final selectedTab = _tabs[_tabController.index];
-    
+
     if (selectedTab == 'Semua') {
       return _allBookings;
     } else if (selectedTab == 'Pending') {
@@ -84,7 +93,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     } else if (selectedTab == 'Selesai') {
       return _allBookings.where((b) => b.status == 'done').toList();
     }
-    
+
     return _allBookings;
   }
 
@@ -169,8 +178,12 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     if (confirmed == true) {
       try {
         final request = context.read<CookieRequest>();
-        await BookingService.updateBookingStatus(request, booking.id, 'confirmed');
-        
+        await BookingService.updateBookingStatus(
+          request,
+          booking.id,
+          'confirmed',
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -244,7 +257,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       try {
         final request = context.read<CookieRequest>();
         await BookingService.cancelBooking(request, booking.id);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -321,7 +334,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       try {
         final request = context.read<CookieRequest>();
         await BookingService.updateBookingStatus(request, booking.id, 'done');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -356,7 +369,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => const Center(child: SequenceLoader(size: 50)),
     );
 
     final result = await ChatService.createChatWithUser(
@@ -446,21 +459,19 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       body: _isLoading
           ? _buildLoadingState()
           : _errorMessage != null
-              ? _buildErrorState()
-              : _buildBookingsList(),
+          ? _buildErrorState()
+          : _buildBookingsList(),
     );
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-          ),
-          SizedBox(height: 16),
-          Text(
+          const SequenceLoader(size: 60),
+          const SizedBox(height: 16),
+          const Text(
             'Memuat booking...',
             style: TextStyle(
               fontFamily: 'Quicksand',
@@ -504,7 +515,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
 
   Widget _buildEmptyState() {
     final selectedTab = _tabs[_tabController.index];
-    
+
     return CommonEmptyWidget(
       title: 'Tidak Ada Booking',
       message: selectedTab == 'Semua'
@@ -521,7 +532,9 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
     final canReject = booking.status == 'paid' || booking.status == 'pending';
     final canMarkDone = booking.status == 'confirmed';
     final canChat = booking.status == 'confirmed';
-    final buttonShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    final buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+    );
     const buttonPadding = EdgeInsets.symmetric(vertical: 12);
     const buttonTextStyle = TextStyle(
       fontFamily: 'Quicksand',
@@ -533,10 +546,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: statusColor.withOpacity(0.3),
-          width: 2,
-        ),
+        side: BorderSide(color: statusColor.withOpacity(0.3), width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -547,7 +557,10 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -555,11 +568,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        statusIcon,
-                        size: 16,
-                        color: statusColor,
-                      ),
+                      Icon(statusIcon, size: 16, color: statusColor),
                       const SizedBox(width: 6),
                       Text(
                         booking.statusDisplay,
@@ -710,10 +719,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                       child: ElevatedButton.icon(
                         onPressed: () => _confirmBooking(booking),
                         icon: const Icon(Icons.check_circle, size: 18),
-                        label: const Text(
-                          'Konfirmasi',
-                          style: buttonTextStyle,
-                        ),
+                        label: const Text('Konfirmasi', style: buttonTextStyle),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
@@ -729,10 +735,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                       child: OutlinedButton.icon(
                         onPressed: () => _rejectBooking(booking),
                         icon: const Icon(Icons.cancel, size: 18),
-                        label: const Text(
-                          'Tolak',
-                          style: buttonTextStyle,
-                        ),
+                        label: const Text('Tolak', style: buttonTextStyle),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.coralRed,
                           side: const BorderSide(color: AppColors.coralRed),
@@ -741,16 +744,14 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                         ),
                       ),
                     ),
-                  if (canReject && (canChat || canMarkDone)) const SizedBox(width: 8),
+                  if (canReject && (canChat || canMarkDone))
+                    const SizedBox(width: 8),
                   if (canChat) ...[
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _openChatForBooking(booking),
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: const Text(
-                          'Chat',
-                          style: buttonTextStyle,
-                        ),
+                        label: const Text('Chat', style: buttonTextStyle),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryGreen,
                           side: const BorderSide(color: AppColors.primaryGreen),
@@ -766,10 +767,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage> with SingleTicker
                       child: ElevatedButton.icon(
                         onPressed: () => _markAsDone(booking),
                         icon: const Icon(Icons.done_all, size: 18),
-                        label: const Text(
-                          'Selesai',
-                          style: buttonTextStyle,
-                        ),
+                        label: const Text('Selesai', style: buttonTextStyle),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
