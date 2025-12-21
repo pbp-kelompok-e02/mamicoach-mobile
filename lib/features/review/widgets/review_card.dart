@@ -26,11 +26,16 @@ class ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = review.isAnonymous
-        ? 'Anonymous User'
-        : (authorName?.trim().isNotEmpty == true ? authorName!.trim() : 'User');
+        ? 'Pengguna Anonim'
+        : (authorName?.trim().isNotEmpty == true
+              ? authorName!.trim()
+              : 'Pengguna');
+
     final displayCourseTitle = (courseTitle?.trim().isNotEmpty == true)
-      ? courseTitle!.trim()
-      : 'Course #${review.courseId}';
+        ? courseTitle!.trim()
+        : (review.courseId > 0
+              ? 'Kelas #${review.courseId}'
+              : 'Kelas tidak tersedia');
 
     return Container(
       decoration: BoxDecoration(
@@ -43,10 +48,7 @@ class ReviewCard extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey.shade200,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -65,8 +67,8 @@ class ReviewCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.grey.shade300,
                     image: (!review.isAnonymous && authorAvatarUrl != null)
-                          ? DecorationImage(
-                              image: proxyNetworkImageProvider(authorAvatarUrl!),
+                        ? DecorationImage(
+                            image: proxyNetworkImageProvider(authorAvatarUrl!),
                             fit: BoxFit.cover,
                           )
                         : null,
@@ -146,81 +148,79 @@ class ReviewCard extends StatelessWidget {
               children: [
                 Text(
                   _formatDate(review.createdAt),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                if (isAuthor)
+                if (isAuthor && (onEdit != null || onDelete != null))
                   Row(
                     children: [
-                      // Edit Button
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: onEdit,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.edit,
-                                  size: 14,
-                                  color: const Color(0xFF16A34A),
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Edit',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.primaryGreen,
+                      if (onEdit != null)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onEdit,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit,
+                                    size: 14,
+                                    color: const Color(0xFF16A34A),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Delete Button
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            _showDeleteDialog(context);
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.delete,
-                                  size: 14,
-                                  color: Color(0xFFDC2626),
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Delete',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.error,
+                      if (onEdit != null && onDelete != null)
+                        const SizedBox(width: 8),
+                      if (onDelete != null)
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              _showDeleteDialog(context);
+                            },
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.delete,
+                                    size: 14,
+                                    color: Color(0xFFDC2626),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
               ],
@@ -235,16 +235,21 @@ class ReviewCard extends StatelessWidget {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
+    if (difference.isNegative) {
+      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+    }
+
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
-        return '${difference.inMinutes} minutes ago';
+        if (difference.inMinutes <= 0) return 'Baru saja';
+        return '${difference.inMinutes} menit yang lalu';
       }
-      return '${difference.inHours} hours ago';
+      return '${difference.inHours} jam yang lalu';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+      return '${difference.inDays} hari yang lalu';
     } else if (difference.inDays < 30) {
       final weeks = (difference.inDays / 7).floor();
-      return '$weeks week${weeks > 1 ? 's' : ''} ago';
+      return '$weeks minggu yang lalu';
     } else {
       return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
     }
@@ -276,10 +281,7 @@ class ReviewCard extends StatelessWidget {
               const SizedBox(width: 12),
               const Text(
                 'Delete Review',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ],
           ),

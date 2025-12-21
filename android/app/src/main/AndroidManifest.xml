@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Attachments: camera + gallery access (runtime prompts handled by plugins) -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ notifications runtime permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Android 13+ media access -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <!-- Android 12 and below media access -->
@@ -12,6 +15,9 @@
         android:label="mamicoach_mobile"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="mamicoach_chat" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

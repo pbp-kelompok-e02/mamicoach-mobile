@@ -1,6 +1,7 @@
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
 import 'package:mamicoach_mobile/models/booking.dart';
+import 'package:mamicoach_mobile/utils/datetime_utils.dart';
 import 'package:intl/intl.dart';
 
 class BookingService {
@@ -48,14 +49,20 @@ class BookingService {
       // Django returns: { "available_times": [{"start_time": "10:00", ...}], ... }
       if (response['available_times'] != null) {
         final timeSlots = <Map<String, dynamic>>[];
+        final now = DateTime.now();
         
         for (var item in response['available_times']) {
           final startTimeStr = item['start_time'] as String;
-          final timeParts = startTimeStr.split(':');
-          final hour = int.parse(timeParts[0]);
-          final minute = int.parse(timeParts[1]);
           
-          final startDatetime = DateTime(date.year, date.month, date.day, hour, minute);
+          // Combine date with time string in WIB timezone
+          final startDatetime = DateTimeUtils.combineDateTime(date, startTimeStr);
+          
+          // Skip slots where less than 1 hour until class starts
+          final hoursUntilClass = startDatetime.difference(now).inHours;
+          if (hoursUntilClass < 1) {
+            continue;
+          }
+          
           final endDatetime = startDatetime.add(Duration(minutes: courseDurationMinutes));
           
           timeSlots.add({
@@ -106,6 +113,7 @@ class BookingService {
     DateTime endDatetime,
   ) async {
     try {
+      // Send datetime directly without timezone conversion (all users in WIB)
       // Format date as YYYY-MM-DD and time as HH:mm for Django
       final dateStr = DateFormat('yyyy-MM-dd').format(startDatetime);
       final startTimeStr = DateFormat('HH:mm').format(startDatetime);

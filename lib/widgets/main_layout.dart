@@ -16,6 +16,8 @@ import 'package:mamicoach_mobile/screens/register_coach_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart';
 import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
 import 'package:mamicoach_mobile/screens/profile_page.dart';
+import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
+import 'package:mamicoach_mobile/screens/settings_page.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
@@ -63,27 +65,41 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/logo.png',
-              height: _isSearching ? 34 : 38,
-              width: _isSearching ? 34 : 38,
-            ),
-            const SizedBox(width: 8),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: _isSearching
-                  ? const SizedBox.shrink()
-                  : Text(
-                      widget.title,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryGreen,
-                        fontSize: 20,
-                      ),
-                    ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                  (route) => false,
+                );
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: _isSearching ? 34 : 38,
+                    width: _isSearching ? 34 : 38,
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    child: _isSearching
+                        ? const SizedBox.shrink()
+                        : Text(
+                            widget.title,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGreen,
+                              fontSize: 20,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(width: _isSearching ? 8 : 12),
             Expanded(
@@ -223,6 +239,16 @@ class _MainLayoutState extends State<MainLayout> {
                                 );
                               } else if (value == 'logout') {
                                 try {
+                                  // Best-effort: unregister device token BEFORE session logout,
+                                  // but only if chat push notifications are enabled.
+                                  final enabled =
+                                      await PushNotificationService.instance
+                                          .areChatPushNotificationsEnabled();
+                                  if (enabled) {
+                                    await PushNotificationService.instance
+                                        .unregisterTokenWithBackend(request);
+                                  }
+
                                   final response = await request.logout(
                                     "${ApiConstants.baseUrl}/auth/api_logout/",
                                   );
@@ -575,7 +601,12 @@ class _MainLayoutState extends State<MainLayout> {
                       title: 'Pengaturan',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navigate to settings page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsPage(),
+                          ),
+                        );
                       },
                     ),
                     _buildDrawerItem(

@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
 import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
+import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
 class ChatHelper {
+  static void _redirectToLogin(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
   static Future<void> startChatWithCoach({
     required BuildContext context,
     required int coachId,
@@ -14,13 +22,16 @@ class ChatHelper {
     PreSendAttachment? preSendAttachment,
   }) async {
     final request = context.read<CookieRequest>();
-    
+
+    if (!request.loggedIn) {
+      _redirectToLogin(context);
+      return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     final result = await ChatService.createChatWithCoach(
@@ -29,17 +40,21 @@ class ChatHelper {
     );
 
     if (!context.mounted) return;
-    
+
     Navigator.pop(context);
 
     if (result['success'] == true) {
-      final nameParts = coachName.split(' ');
-      final otherUser = ChatUser(
-        id: coachId,
-        username: coachName.toLowerCase().replaceAll(' ', '_'),
-        firstName: nameParts.first,
-        lastName: nameParts.skip(1).join(' '),
-      );
+      final otherUser = result['other_user'] != null
+          ? ChatUser.fromJson(result['other_user'] as Map<String, dynamic>)
+          : (() {
+              final nameParts = coachName.split(' ');
+              return ChatUser(
+                id: coachId,
+                username: 'coach_$coachId',
+                firstName: nameParts.first,
+                lastName: nameParts.skip(1).join(' '),
+              );
+            })();
 
       Navigator.push(
         context,
@@ -53,9 +68,17 @@ class ChatHelper {
         ),
       );
     } else {
+      final error = (result['error'] ?? 'Failed to start chat').toString();
+      final lower = error.toLowerCase();
+      if (lower.contains('authentication required') ||
+          lower.contains('session expired') ||
+          lower.contains('login')) {
+        _redirectToLogin(context);
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['error'] ?? 'Failed to start chat'),
+          content: Text(error),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

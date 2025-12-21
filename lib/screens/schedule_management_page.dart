@@ -4,11 +4,11 @@ import 'package:mamicoach_mobile/models/coach_availability.dart';
 import 'package:mamicoach_mobile/services/schedule_service.dart';
 import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
+import 'package:mamicoach_mobile/utils/datetime_utils.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
 
 class ScheduleManagementPage extends StatefulWidget {
   const ScheduleManagementPage({super.key});
@@ -294,7 +294,17 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
     TimeOfDay startTime,
     TimeOfDay endTime,
   ) async {
-    // Validation
+    // Validation 1: Check if start time has already passed
+    final startTimeStr = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+    final startDateTime = DateTimeUtils.combineDateTime(date, startTimeStr);
+    final now = DateTime.now();
+    
+    if (startDateTime.isBefore(now)) {
+      _showErrorSnackBar('Tidak dapat menambahkan jadwal dengan waktu yang sudah lewat');
+      return;
+    }
+    
+    // Validation 2: Check if start time is before end time
     if (startTime.hour >= endTime.hour && startTime.minute >= endTime.minute) {
       _showErrorSnackBar('Waktu mulai harus lebih awal dari waktu selesai');
       return;
@@ -491,13 +501,15 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
       );
     }
 
-    return Column(
-      children: [
-        _buildCalendarSection(),
-        _buildAddButton(),
-        const SizedBox(height: 8),
-        Expanded(child: _buildAvailabilitiesList()),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildCalendarSection(),
+          _buildAddButton(),
+          const SizedBox(height: 8),
+          _buildAvailabilitiesList(),
+        ],
+      ),
     );
   }
 
@@ -671,6 +683,11 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
         ? _getAvailabilitiesForDate(_selectedDay!)
         : _availabilities;
 
+    // Filter out past schedules (auto-hide)
+    final activeAvailabilities = displayAvailabilities
+        .where((availability) => !availability.isPast)
+        .toList();
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
@@ -686,6 +703,7 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           Padding(
@@ -724,26 +742,25 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
           const Divider(height: 1),
           
           // List Content
-          Expanded(
-            child: displayAvailabilities.isEmpty
-                ? CommonEmptyWidget(
-                    title: _selectedDay != null
-                        ? 'Tidak ada jadwal'
-                        : 'Belum ada jadwal',
-                    message: _selectedDay != null
-                        ? 'Tidak ada jadwal pada tanggal ini'
-                        : 'Klik tombol "Tambah Jadwal Baru" untuk menambah jadwal',
+          activeAvailabilities.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CommonEmptyWidget(
+                    title: 'Tidak ada jadwal',
+                    message: 'Klik tombol "Tambah Jadwal Baru" untuk menambah jadwal',
                     icon: Icons.event_available,
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: displayAvailabilities.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _buildAvailabilityCard(displayAvailabilities[index]);
-                    },
                   ),
-          ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: activeAvailabilities.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _buildAvailabilityCard(activeAvailabilities[index]);
+                  },
+                ),
         ],
       ),
     );
@@ -774,11 +791,11 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
                 Expanded(
                   child: Text(
                     '${availability.dayName}, ${availability.dateFormatted}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Quicksand',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: availability.isPast ? Colors.grey : Colors.black87,
+                      color: Colors.black87,
                     ),
                   ),
                 ),
@@ -795,40 +812,26 @@ class _ScheduleManagementPageState extends State<ScheduleManagementPage> {
                 const SizedBox(width: 8),
                 Text(
                   availability.timeRangeFormatted,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Quicksand',
                     fontSize: 14,
-                    color: availability.isPast ? Colors.grey : AppColors.darkGrey,
+                    color: AppColors.darkGrey,
                   ),
                 ),
               ],
             ),
-            if (availability.isPast)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Jadwal sudah terlewat',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (!availability.isPast)
-                  TextButton.icon(
-                    onPressed: () => _showAddAvailabilityDialog(editAvailability: availability),
-                    icon: const Icon(Icons.edit, size: 20),
-                    label: const Text(
-                      'Edit',
-                      style: TextStyle(fontFamily: 'Quicksand', fontSize: 12),
-                    ),
+                TextButton.icon(
+                  onPressed: () => _showAddAvailabilityDialog(editAvailability: availability),
+                  icon: const Icon(Icons.edit, size: 20),
+                  label: const Text(
+                    'Edit',
+                    style: TextStyle(fontFamily: 'Quicksand', fontSize: 12),
                   ),
+                ),
                 TextButton.icon(
                   onPressed: () => _deleteAvailability(availability),
                   icon: const Icon(Icons.delete, size: 20, color: AppColors.coralRed),

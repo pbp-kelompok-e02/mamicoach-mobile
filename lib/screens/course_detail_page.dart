@@ -7,13 +7,14 @@ import 'package:mamicoach_mobile/screens/course_form_page.dart';
 import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/screens/booking_form_page.dart';
+import 'package:mamicoach_mobile/screens/coach_detail_page.dart';
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/review/widgets/course_reviews_section.dart';
-import 'package:mamicoach_mobile/features/review/widgets/course_my_reviews_section.dart';
+import 'package:mamicoach_mobile/screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -349,88 +350,99 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.lightGrey,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CoachDetailPage(coachId: course.coach.id),
                     ),
-                    child: course.coach.profileImageUrl != null
-                        ? ClipOval(
-                            child: ProxyNetworkImage(
-                              course.coach.profileImageUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (context) => Icon(
-                                Icons.person,
-                                size: 30,
-                                color: AppColors.darkGrey,
-                              ),
-                              errorWidget: (context, error) => Icon(
-                                Icons.person,
-                                size: 30,
-                                color: AppColors.darkGrey,
-                              ),
-                            ),
-                          )
-                        : Icon(
-                            Icons.person,
-                            size: 30,
-                            color: AppColors.darkGrey,
-                          ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                course.coach.fullName,
-                                style: const TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                  );
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.lightGrey,
+                      ),
+                      child: course.coach.profileImageUrl != null
+                          ? ClipOval(
+                              child: ProxyNetworkImage(
+                                course.coach.profileImageUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (context) => Icon(
+                                  Icons.person,
+                                  size: 30,
+                                  color: AppColors.darkGrey,
+                                ),
+                                errorWidget: (context, error) => Icon(
+                                  Icons.person,
+                                  size: 30,
+                                  color: AppColors.darkGrey,
                                 ),
                               ),
+                            )
+                          : Icon(
+                              Icons.person,
+                              size: 30,
+                              color: AppColors.darkGrey,
                             ),
-                            if (course.coach.verified) ...[
-                              const SizedBox(width: 4),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  course.coach.fullName,
+                                  style: const TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              if (course.coach.verified) ...[
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.verified,
+                                  size: 16,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
                               Icon(
-                                Icons.verified,
-                                size: 16,
+                                Icons.star,
+                                size: 14,
                                 color: AppColors.primaryGreen,
                               ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.star,
-                              size: 14,
-                              color: AppColors.primaryGreen,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${course.coach.rating.toStringAsFixed(1)} • ${course.coach.totalHoursCoachedFormatted}',
-                              style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontSize: 12,
-                                color: AppColors.darkGrey,
+                              const SizedBox(width: 4),
+                              Text(
+                                '${course.coach.rating.toStringAsFixed(1)} • ${course.coach.totalHoursCoachedFormatted}',
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontSize: 12,
+                                  color: AppColors.darkGrey,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (course.coach.bio != null && course.coach.bio!.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -450,17 +462,31 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => ChatHelper.startChatWithCoach(
-                      context: context,
-                      coachId: course.coach.id,
-                      coachName: course.coach.fullName,
-                      preSendMessage:
-                          'Halo Coach ${course.coach.fullName}, saya tertarik dengan kelas "${course.title}". Boleh tanya-tanya dulu?',
-                      preSendAttachment: PreSendAttachment.course(
-                        courseId: course.id,
-                        title: course.title,
-                      ),
-                    ),
+                    onPressed: () {
+                      final request = context.read<CookieRequest>();
+                      print(request.loggedIn);
+                      if (!request.loggedIn) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginPage(),
+                          ),
+                        );
+                        return;
+                      }
+
+                      ChatHelper.startChatWithCoach(
+                        context: context,
+                        coachId: course.coach.id,
+                        coachName: course.coach.fullName,
+                        preSendMessage:
+                            'Halo Coach ${course.coach.fullName}, saya tertarik dengan kelas "${course.title}". Boleh tanya-tanya dulu?',
+                        preSendAttachment: PreSendAttachment.course(
+                          courseId: course.id,
+                          title: course.title,
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGreen,
                       foregroundColor: Colors.white,
@@ -530,18 +556,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
         ),
 
         const Divider(),
-        CourseReviewsSection(
-          courseId: course.id,
-          courseTitle: course.title,
-        ),
-
-        if (!isOwner && request.loggedIn) ...[
-          const Divider(),
-          CourseMyReviewsSection(
-            courseId: course.id,
-            courseTitle: course.title,
-          ),
-        ],
+        CourseReviewsSection(courseId: course.id, courseTitle: course.title),
 
         // Related courses
         if (course.relatedCourses.isNotEmpty) ...[
@@ -650,7 +665,7 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
             builder: (context) => BookingFormPage(course: course),
           ),
         );
-        
+
         // Refresh page if booking was successful
         if (result == true && mounted) {
           setState(() {});

@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
-import 'package:mamicoach_mobile/screens/booking_detail_page.dart';
+import 'package:mamicoach_mobile/providers/user_provider.dart';
+import 'package:mamicoach_mobile/screens/coach_bookings_page.dart';
 import 'package:mamicoach_mobile/screens/course_detail_page.dart';
+import 'package:mamicoach_mobile/screens/my_bookings_page.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
   final VoidCallback? onReply;
 
-  const ChatBubble({
-    super.key,
-    required this.message,
-    this.onReply,
-  });
+  const ChatBubble({super.key, required this.message, this.onReply});
 
   @override
   Widget build(BuildContext context) {
     final isOwn = message.isSentByMe;
-    
+
     return Align(
       alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
         child: Column(
-          crossAxisAlignment: isOwn ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isOwn
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (message.replyTo != null) _buildReplyContext(context, isOwn),
             Container(
@@ -44,7 +46,7 @@ class ChatBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -53,52 +55,63 @@ class ChatBubble extends StatelessWidget {
                       message.content,
                       style: TextStyle(
                         color: isOwn ? Colors.white : Colors.black87,
-                        fontSize: 15,
+                        fontSize: 14,
                       ),
                     ),
                   if (message.attachments.isNotEmpty) ...[
-                    if (message.content.isNotEmpty) const SizedBox(height: 8),
-                    ...message.attachments.map((att) => _buildAttachment(context, att, isOwn)),
+                    if (message.content.isNotEmpty) const SizedBox(height: 6),
+                    ...message.attachments.map(
+                      (att) => _buildAttachment(context, att, isOwn),
+                    ),
                   ],
                 ],
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 1),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!isOwn && onReply != null)
+                if (isOwn && onReply != null)
                   IconButton(
-                    icon: const Icon(Icons.reply, size: 16),
+                    icon: const Icon(Icons.reply, size: 14),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 28,
+                      height: 28,
+                    ),
+                    splashRadius: 18,
                     onPressed: onReply,
                     color: Colors.grey,
                   ),
-                const SizedBox(width: 4),
+                if (isOwn && onReply != null) const SizedBox(width: 4),
                 Text(
                   _formatTime(message.timestamp),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
                 if (isOwn) ...[
                   const SizedBox(width: 4),
                   Icon(
                     Icons.done_all,
-                    size: 14,
+                    size: 13,
                     color: message.read ? Colors.blue : Colors.grey,
                   ),
                 ],
-                if (isOwn && onReply != null)
+                if (!isOwn && onReply != null) ...[
+                  const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.reply, size: 16),
+                    icon: const Icon(Icons.reply, size: 14),
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 28,
+                      height: 28,
+                    ),
+                    splashRadius: 18,
                     onPressed: onReply,
                     color: Colors.grey,
                   ),
+                ],
               ],
             ),
           ],
@@ -109,16 +122,13 @@ class ChatBubble extends StatelessWidget {
 
   Widget _buildReplyContext(BuildContext context, bool isOwn) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.grey.withOpacity(0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border(
-          left: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 3,
-          ),
+          left: BorderSide(color: Theme.of(context).primaryColor, width: 3),
         ),
       ),
       child: Column(
@@ -128,14 +138,15 @@ class ChatBubble extends StatelessWidget {
             message.replyTo!.senderUsername,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11,
               color: Theme.of(context).primaryColor,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             message.replyTo!.content,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: Colors.grey,
               fontStyle: FontStyle.italic,
             ),
@@ -147,7 +158,11 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildAttachment(BuildContext context, ChatAttachment attachment, bool isOwn) {
+  Widget _buildAttachment(
+    BuildContext context,
+    ChatAttachment attachment,
+    bool isOwn,
+  ) {
     final ext = _fileExtension(attachment);
     final inferredIsImage = _looksLikeImage(ext);
     final absoluteUrl = _absoluteUrl(attachment.fileUrl);
@@ -235,7 +250,9 @@ class ChatBubble extends StatelessWidget {
     if ((ext == null || ext.isEmpty) && attachment.fileUrl != null) {
       try {
         final uri = Uri.parse(attachment.fileUrl!);
-        final lastSegment = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+        final lastSegment = uri.pathSegments.isNotEmpty
+            ? uri.pathSegments.last
+            : '';
         if (lastSegment.contains('.')) {
           ext = lastSegment.split('.').last;
         }
@@ -293,7 +310,7 @@ class ChatBubble extends StatelessWidget {
                   attachment.fileName,
                   style: TextStyle(
                     fontSize: 13,
-                    decoration: TextDecoration.underline,
+                    decoration: TextDecoration.none,
                     color: isOwn ? Colors.white : Colors.black87,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -302,12 +319,17 @@ class ChatBubble extends StatelessWidget {
               if (extLabel != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isOwn ? Colors.white.withOpacity(0.2) : Colors.white,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: isOwn ? Colors.white.withOpacity(0.25) : Colors.grey[300]!,
+                      color: isOwn
+                          ? Colors.white.withOpacity(0.25)
+                          : Colors.grey[300]!,
                     ),
                   ),
                   child: Text(
@@ -329,7 +351,15 @@ class ChatBubble extends StatelessWidget {
 
   bool _looksLikeImage(String? ext) {
     if (ext == null) return false;
-    const imageExts = <String>{'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'heic'};
+    const imageExts = <String>{
+      'png',
+      'jpg',
+      'jpeg',
+      'gif',
+      'webp',
+      'bmp',
+      'heic',
+    };
     return imageExts.contains(ext);
   }
 
@@ -439,11 +469,20 @@ class ChatBubble extends StatelessWidget {
     }
   }
 
-  Widget _buildCourseAttachment(BuildContext context, ChatAttachment attachment, bool isOwn) {
-    final titleFromData = attachment.data != null ? (attachment.data!['title'] as String?) : null;
+  Widget _buildCourseAttachment(
+    BuildContext context,
+    ChatAttachment attachment,
+    bool isOwn,
+  ) {
+    final titleFromData = attachment.data != null
+        ? (attachment.data!['title'] as String?)
+        : null;
     final title = attachment.courseName ?? titleFromData ?? 'Unknown Course';
 
-    final courseId = attachment.courseId ?? (attachment.data?['id'] as int?) ?? (attachment.data?['course_id'] as int?);
+    final courseId =
+        attachment.courseId ??
+        (attachment.data?['id'] as int?) ??
+        (attachment.data?['course_id'] as int?);
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -465,12 +504,17 @@ class ChatBubble extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isOwn
-                  ? [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)]
+                  ? [
+                      Colors.white.withOpacity(0.2),
+                      Colors.white.withOpacity(0.1),
+                    ]
                   : [Colors.purple[50]!, Colors.purple[100]!],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isOwn ? Colors.white.withOpacity(0.3) : Colors.purple[200]!,
+              color: isOwn
+                  ? Colors.white.withOpacity(0.3)
+                  : Colors.purple[200]!,
             ),
           ),
           child: Column(
@@ -496,7 +540,9 @@ class ChatBubble extends StatelessWidget {
                   Icon(
                     Icons.chevron_right,
                     size: 22,
-                    color: isOwn ? Colors.white.withOpacity(0.9) : Colors.purple[700],
+                    color: isOwn
+                        ? Colors.white.withOpacity(0.9)
+                        : Colors.purple[700],
                   ),
                 ],
               ),
@@ -513,7 +559,9 @@ class ChatBubble extends StatelessWidget {
                 'Lihat detail course',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isOwn ? Colors.white.withOpacity(0.85) : Colors.purple[800],
+                  color: isOwn
+                      ? Colors.white.withOpacity(0.85)
+                      : Colors.purple[800],
                 ),
               ),
             ],
@@ -523,8 +571,15 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildBookingAttachment(BuildContext context, ChatAttachment attachment, bool isOwn) {
-    final bookingId = attachment.bookingId ?? (attachment.data?['booking_id'] as int?) ?? (attachment.data?['id'] as int?);
+  Widget _buildBookingAttachment(
+    BuildContext context,
+    ChatAttachment attachment,
+    bool isOwn,
+  ) {
+    final bookingId =
+        attachment.bookingId ??
+        (attachment.data?['booking_id'] as int?) ??
+        (attachment.data?['id'] as int?);
     return Container(
       margin: const EdgeInsets.only(top: 8),
       child: _tappable(
@@ -533,10 +588,22 @@ class ChatBubble extends StatelessWidget {
         onTap: bookingId == null
             ? null
             : () {
+                var isCoach = false;
+                try {
+                  isCoach = Provider.of<UserProvider>(
+                    context,
+                    listen: false,
+                  ).isCoach;
+                } catch (_) {
+                  // If UserProvider isn't available in this context, assume regular user.
+                }
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BookingDetailPage(bookingId: bookingId),
+                    builder: (_) => isCoach
+                        ? const CoachBookingsPage()
+                        : MyBookingsPage(initialBookingId: bookingId),
                   ),
                 );
               },
@@ -545,7 +612,10 @@ class ChatBubble extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isOwn
-                  ? [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)]
+                  ? [
+                      Colors.white.withOpacity(0.2),
+                      Colors.white.withOpacity(0.1),
+                    ]
                   : [Colors.blue[50]!, Colors.blue[100]!],
             ),
             borderRadius: BorderRadius.circular(12),
@@ -576,7 +646,9 @@ class ChatBubble extends StatelessWidget {
                   Icon(
                     Icons.chevron_right,
                     size: 22,
-                    color: isOwn ? Colors.white.withOpacity(0.9) : Colors.blue[700],
+                    color: isOwn
+                        ? Colors.white.withOpacity(0.9)
+                        : Colors.blue[700],
                   ),
                 ],
               ),
@@ -593,7 +665,9 @@ class ChatBubble extends StatelessWidget {
                 'Lihat detail booking',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isOwn ? Colors.white.withOpacity(0.85) : Colors.blue[800],
+                  color: isOwn
+                      ? Colors.white.withOpacity(0.85)
+                      : Colors.blue[800],
                 ),
               ),
             ],
@@ -623,39 +697,38 @@ class ChatBubble extends StatelessWidget {
       borderRadius: radius,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: child,
-        ),
+        child: InkWell(onTap: onTap, borderRadius: radius, child: child),
       ),
     );
   }
 
-  Future<void> _openOrDownloadFile(BuildContext context, ChatAttachment attachment) async {
+  Future<void> _openOrDownloadFile(
+    BuildContext context,
+    ChatAttachment attachment,
+  ) async {
     final url = _absoluteUrl(attachment.fileUrl);
     if (url == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File URL tidak tersedia')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('File URL tidak tersedia')));
       return;
     }
 
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal membuka file')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal membuka file')));
     }
   }
 
   void _openImagePreview(BuildContext context, ChatAttachment attachment) {
     final url = _absoluteUrl(attachment.fileUrl);
     if (url == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gambar tidak tersedia')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gambar tidak tersedia')));
       return;
     }
 
@@ -675,19 +748,25 @@ class ChatBubble extends StatelessWidget {
                       ? ProxyNetworkImage(
                           url,
                           fit: BoxFit.contain,
-                          placeholder: (context) => const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          placeholder: (context) =>
+                              const Center(child: CircularProgressIndicator()),
                         )
                       : Image.network(
                           url,
                           fit: BoxFit.contain,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            return const Center(child: Icon(Icons.broken_image, color: Colors.white));
+                            return const Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Colors.white,
+                              ),
+                            );
                           },
                         ),
                 ),
@@ -720,7 +799,20 @@ class ChatBubble extends StatelessWidget {
     } else if (difference.inDays == 1) {
       return 'Yesterday $timeStr';
     } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${months[dateTime.month - 1]} ${dateTime.day}, $timeStr';
     }
   }

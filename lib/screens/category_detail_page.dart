@@ -12,6 +12,7 @@ import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
 
 class CategoryDetailPage extends StatefulWidget {
   final CategoryModel category;
@@ -25,11 +26,29 @@ class CategoryDetailPage extends StatefulWidget {
 class _CategoryDetailPageState extends State<CategoryDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _coursePage = 1;
+  int _coachPage = 1;
+  late int _courseCount;
+
+  List<Course> _courses = [];
+  Map<String, dynamic>? _coursesPagination;
+  bool _coursesLoading = true;
+  String? _coursesError;
+
+  List<Coach> _coaches = [];
+  Map<String, dynamic>? _coachesPagination;
+  bool _coachesLoading = true;
+  String? _coachesError;
 
   @override
   void initState() {
     super.initState();
+    _courseCount = widget.category.courseCount;
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCourses();
+      _loadCoaches();
+    });
   }
 
   @override
@@ -38,40 +57,99 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     super.dispose();
   }
 
-  Future<List<Course>> fetchCoursesByCategory(CookieRequest request) async {
-    final response = await request.get(
-      '${api_constants.baseUrl}/api/courses/?category=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
-    );
+  Future<void> _loadCourses() async {
+    setState(() {
+      _coursesLoading = true;
+      _coursesError = null;
+    });
 
-    if (response['success'] == true) {
-      List<Course> courses = [];
-      for (var d in response['data']) {
-        courses.add(Course.fromJson(d));
+    final request = context.read<CookieRequest>();
+    try {
+      final response = await request.get(
+        '${api_constants.baseUrl}/api/courses/?category=${Uri.encodeComponent(widget.category.name.toLowerCase())}&page=$_coursePage',
+      );
+
+      if (response['success'] == true) {
+        List<Course> courses = [];
+        for (var d in response['data']) {
+          courses.add(Course.fromJson(d));
+        }
+        if (mounted) {
+          setState(() {
+            _courses = courses;
+            _coursesPagination = response['pagination'];
+            // Update course count from pagination total if available
+            final paginationCount = response['pagination']?['total_count'];
+            if (paginationCount != null && (paginationCount as int) > 0) {
+              _courseCount = paginationCount;
+            } else if (_courses.isNotEmpty) {
+              // Fallback: If API count is 0/null but we have items, use item count
+              // This ensures we never show "0" when items are visible.
+              _courseCount = _courses.length;
+            }
+            _coursesLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _coursesLoading = false;
+          });
+        }
       }
-      return courses;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _coursesLoading = false;
+          _coursesError = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     }
-    return [];
   }
 
-  Future<List<Coach>> fetchCoachesByCategory(CookieRequest request) async {
-    final response = await request.get(
-      '${api_constants.baseUrl}/api/coaches/?expertise=${Uri.encodeComponent(widget.category.name.toLowerCase())}',
-    );
+  Future<void> _loadCoaches() async {
+    setState(() {
+      _coachesLoading = true;
+      _coachesError = null;
+    });
 
-    if (response['success'] == true) {
-      List<Coach> coaches = [];
-      for (var d in response['data']) {
-        coaches.add(Coach.fromJson(d));
+    final request = context.read<CookieRequest>();
+    try {
+      final response = await request.get(
+        '${api_constants.baseUrl}/api/coaches/?expertise=${Uri.encodeComponent(widget.category.name.toLowerCase())}&page=$_coachPage',
+      );
+
+      if (response['success'] == true) {
+        List<Coach> coaches = [];
+        for (var d in response['data']) {
+          coaches.add(Coach.fromJson(d));
+        }
+        if (mounted) {
+          setState(() {
+            _coaches = coaches;
+            _coachesPagination = response['pagination'];
+            _coachesLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _coachesLoading = false;
+          });
+        }
       }
-      return coaches;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _coachesLoading = false;
+          _coachesError = e.toString().replaceAll('Exception: ', '');
+        });
+      }
     }
-    return [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
-
     return MainLayout(
       child: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
@@ -80,13 +158,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primaryGreen, AppColors.darkGreen],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                decoration: BoxDecoration(color: AppColors.primaryGreen),
                 child: Column(
                   children: [
                     if (widget.category.thumbnailUrl != null)
@@ -94,10 +166,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                         width: 120,
                         height: 120,
                         margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
+                        // decoration: BoxDecoration(
+                        //   borderRadius: BorderRadius.circular(16),
+                        //   border: Border.all(color: Colors.white, width: 3),
+                        // ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(13),
                           child: ProxyNetworkImage(
@@ -144,7 +216,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                       ),
                     const SizedBox(height: 16),
                     Text(
-                      '${widget.category.courseCount} Kelas Tersedia',
+                      '$_courseCount Kelas Tersedia',
                       style: TextStyle(
                         fontFamily: 'Quicksand',
                         fontSize: 14,
@@ -187,107 +259,200 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           controller: _tabController,
           children: [
             // Courses Tab
-            FutureBuilder<List<Course>>(
-              future: fetchCoursesByCategory(request),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: 3,
-                    itemBuilder: (context, index) => const Padding(
-                      padding: EdgeInsets.only(bottom: 16),
-                      child: ShimmerPlaceholder(width: double.infinity, height: 200),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.school_outlined,
-                          size: 64,
-                          color: AppColors.darkGrey,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Belum ada kelas untuk kategori ini',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 16,
-                            color: AppColors.darkGrey,
+            Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      setState(() {
+                        _coursePage = 1;
+                      });
+                      await _loadCourses();
+                    },
+                    child: _coursesLoading
+                        ? ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: 3,
+                            itemBuilder: (context, index) => const Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: ShimmerPlaceholder(
+                                width: double.infinity,
+                                height: 200,
+                              ),
+                            ),
+                          )
+                        : _coursesError != null
+                        ? Center(child: Text(_coursesError!))
+                        : _courses.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.school_outlined,
+                                  size: 64,
+                                  color: AppColors.darkGrey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Belum ada kelas untuk kategori ini',
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 16,
+                                    color: AppColors.darkGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _courses.length,
+                            itemBuilder: (context, index) {
+                              return _buildCourseCard(_courses[index]);
+                            },
                           ),
+                  ),
+                ),
+                if (_coursesPagination != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, -2),
                         ),
                       ],
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    return _buildCourseCard(snapshot.data![index]);
-                  },
-                );
-              },
+                    child: PaginationControls(
+                      currentPage: _coursesPagination!['current_page'],
+                      totalPages: _coursesPagination!['total_pages'],
+                      hasPrevious: _coursesPagination!['has_previous'],
+                      hasNext: _coursesPagination!['has_next'],
+                      isLoading: _coursesLoading,
+                      onPrevious: () {
+                        if (_coursesPagination!['has_previous']) {
+                          setState(() {
+                            _coursePage--;
+                          });
+                          _loadCourses();
+                        }
+                      },
+                      onNext: () {
+                        if (_coursesPagination!['has_next']) {
+                          setState(() {
+                            _coursePage++;
+                          });
+                          _loadCourses();
+                        }
+                      },
+                    ),
+                  ),
+              ],
             ),
 
             // Coaches Tab
-            FutureBuilder<List<Coach>>(
-              future: fetchCoachesByCategory(request),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: 3,
-                    itemBuilder: (context, index) => const Padding(
-                      padding: EdgeInsets.only(bottom: 16),
-                      child: ShimmerPlaceholder(width: double.infinity, height: 200),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person_search,
-                          size: 64,
-                          color: AppColors.darkGrey,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Belum ada coach untuk kategori ini',
-                          style: TextStyle(
-                            fontFamily: 'Quicksand',
-                            fontSize: 16,
-                            color: AppColors.darkGrey,
+            Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      setState(() {
+                        _coachPage = 1;
+                      });
+                      await _loadCoaches();
+                    },
+                    child: _coachesLoading
+                        ? ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: 3,
+                            itemBuilder: (context, index) => const Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: ShimmerPlaceholder(
+                                width: double.infinity,
+                                height: 200,
+                              ),
+                            ),
+                          )
+                        : _coachesError != null
+                        ? Center(child: Text(_coachesError!))
+                        : _coaches.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_search,
+                                  size: 64,
+                                  color: AppColors.darkGrey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Belum ada coach untuk kategori ini',
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 16,
+                                    color: AppColors.darkGrey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 200,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.58,
+                                ),
+                            itemCount: _coaches.length,
+                            itemBuilder: (context, index) {
+                              return _buildCoachCard(_coaches[index]);
+                            },
                           ),
+                  ),
+                ),
+                if (_coachesPagination != null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, -2),
                         ),
                       ],
                     ),
-                  );
-                }
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.75,
+                    child: PaginationControls(
+                      currentPage: _coachesPagination!['current_page'],
+                      totalPages: _coachesPagination!['total_pages'],
+                      hasPrevious: _coachesPagination!['has_previous'],
+                      hasNext: _coachesPagination!['has_next'],
+                      isLoading: _coachesLoading,
+                      onPrevious: () {
+                        if (_coachesPagination!['has_previous']) {
+                          setState(() {
+                            _coachPage--;
+                          });
+                          _loadCoaches();
+                        }
+                      },
+                      onNext: () {
+                        if (_coachesPagination!['has_next']) {
+                          setState(() {
+                            _coachPage++;
+                          });
+                          _loadCoaches();
+                        }
+                      },
+                    ),
                   ),
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    return _buildCoachCard(snapshot.data![index]);
-                  },
-                );
-              },
+              ],
             ),
           ],
         ),
@@ -480,73 +645,80 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile picture
-            Stack(
-              children: [
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.lightGrey,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
+            Expanded(
+              flex: 4,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.lightGrey,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
                     ),
+                    child: coach.profileImageUrl != null
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                            ),
+                            child: ProxyNetworkImage(
+                              coach.profileImageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              placeholder: (context) => Center(
+                                child: Icon(
+                                  Icons.person,
+                                  size: 48,
+                                  color: AppColors.darkGrey,
+                                ),
+                              ),
+                              errorWidget: (context, error) => Center(
+                                child: Icon(
+                                  Icons.person,
+                                  size: 48,
+                                  color: AppColors.darkGrey,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.person,
+                              size: 48,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
                   ),
-                  child: coach.profileImageUrl != null
-                      ? ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(12),
-                          ),
-                          child: ProxyNetworkImage(
-                            coach.profileImageUrl!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context) => Center(
-                              child: Icon(
-                                Icons.person,
-                                size: 48,
-                                color: AppColors.darkGrey,
-                              ),
-                            ),
-                            errorWidget: (context, error) => Center(
-                              child: Icon(
-                                Icons.person,
-                                size: 48,
-                                color: AppColors.darkGrey,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 48,
-                            color: AppColors.darkGrey,
-                          ),
+                  if (coach.verified)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen,
+                          shape: BoxShape.circle,
                         ),
-                ),
-                if (coach.verified)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.verified,
-                        color: Colors.white,
-                        size: 16,
+                        child: const Icon(
+                          Icons.verified,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
 
             // Coach info
             Expanded(
+              flex: 3,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

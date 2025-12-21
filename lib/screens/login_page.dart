@@ -10,6 +10,7 @@ import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
 import 'package:mamicoach_mobile/providers/user_provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -126,6 +127,16 @@ class _LoginPageState extends State<LoginPage> {
                             profilePicture: response['profile_image'],
                           );
 
+                          // Best-effort: register this device token for chat push notifications
+                          // if the user has them enabled.
+                          final chatPushEnabled =
+                              await PushNotificationService.instance
+                                  .areChatPushNotificationsEnabled();
+                          if (chatPushEnabled) {
+                            await PushNotificationService.instance
+                                .registerTokenWithBackend(request);
+                          }
+
                           SnackBarHelper.showSuccessSnackBar(
                             context,
                             '$message Selamat datang, ${response['username']}!',
@@ -137,6 +148,11 @@ class _LoginPageState extends State<LoginPage> {
                               builder: (context) => const HomePage(),
                             ),
                           );
+
+                          // If user tapped a notification while logged-out,
+                          // try navigating to the target chat after login.
+                          PushNotificationService.instance
+                              .tryHandlePendingNavigation();
                         } else {
                           SnackBarHelper.showErrorSnackBar(
                             context,

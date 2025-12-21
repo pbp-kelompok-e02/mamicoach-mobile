@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                       // Tagline
                       Text(
-                        'Find Your Perfect Parenting Coach',
+                        'Temukan Coach Terbaik Anda!',
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: 'Quicksand',

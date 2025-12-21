@@ -1,3 +1,5 @@
+import 'package:mamicoach_mobile/utils/datetime_utils.dart';
+
 class Booking {
   final int id;
   final int userId;
@@ -36,13 +38,13 @@ class Booking {
       courseTitle: json['course_title'],
       userName: json['user_name'] ?? '',
       coachName: json['coach_name'],
-      startDatetime: DateTime.parse(json['start_datetime']),
-      endDatetime: DateTime.parse(json['end_datetime']),
+      startDatetime: DateTimeUtils.parseFromAPI(json['start_datetime']),
+      endDatetime: DateTimeUtils.parseFromAPI(json['end_datetime']),
       status: json['status'],
       price: (json['price'] is int) 
           ? (json['price'] as int).toDouble() 
           : json['price'].toDouble(),
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTimeUtils.parseFromAPI(json['created_at']),
     );
   }
 

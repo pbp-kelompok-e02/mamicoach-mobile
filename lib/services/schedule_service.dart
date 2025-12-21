@@ -89,28 +89,20 @@ class ScheduleService {
     int availabilityId,
   ) async {
     try {
-      print('=== DELETE: Attempting to delete ID $availabilityId ===');
-      
       final response = await request.post(
         '${api_constants.baseUrl}/schedule/api/availability/delete/?id=$availabilityId',
         {},
       );
       
-      print('Delete response type: ${response.runtimeType}');
-      print('Delete response: $response');
-      
       // Handle empty or non-JSON response
       if (response == null || response.isEmpty) {
-        print('Empty response, returning success');
         return {'success': true, 'message': 'Availability deleted'};
       }
       
       return response;
     } catch (e) {
-      print('Delete error: $e');
       // If error is JSON parsing, consider it successful delete
       if (e.toString().contains('JSON') || e.toString().contains('Unexpected end')) {
-        print('JSON error, returning success anyway');
         return {'success': true, 'message': 'Availability deleted'};
       }
       throw Exception('Error deleting availability: $e');
