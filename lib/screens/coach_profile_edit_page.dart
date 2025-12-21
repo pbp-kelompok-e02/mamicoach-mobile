@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class CoachProfileEditPage extends StatefulWidget {
   const CoachProfileEditPage({super.key});
@@ -32,6 +33,10 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
   Uint8List? _newProfileImageBytes;
   String? _profileImageBase64;
   final ImagePicker _picker = ImagePicker();
+
+  // Balance (withdrawable income)
+  final NumberFormat _idrFormatter = NumberFormat.decimalPattern('id');
+  String _balanceFormatted = '-';
 
   // Expertise
   final List<String> _selectedExpertise = [];
@@ -86,6 +91,12 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
           _lastNameController.text = profile['full_name']?.split(' ').skip(1).join(' ') ?? '';
           _bioController.text = profile['bio'] ?? '';
           _currentProfileImageUrl = profile['profile_image'];
+          final balance = profile['balance'];
+          if (balance is num) {
+            _balanceFormatted = 'Rp ${_idrFormatter.format(balance)}';
+          } else {
+            _balanceFormatted = '-';
+          }
           
           // Set expertise
           if (profile['expertise'] is List) {
@@ -523,13 +534,13 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const MainLayout(
-        title: 'Edit Profil Coach',
+        title: 'Edit Profil',
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
     return MainLayout(
-      title: 'Edit Profil Coach',
+      title: 'Edit Profil',
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -711,6 +722,84 @@ class _CoachProfileEditPageState extends State<CoachProfileEditPage> {
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Balance + dummy withdraw action
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.lightGrey),
+                  color: Colors.white,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Saldo Dapat Ditarik',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppColors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _balanceFormatted,
+                            style: const TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Withdrawable balance',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 12,
+                              color: AppColors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Placeholder action until withdraw flow is implemented
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Withdraw coming soon')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Withdraw',
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),

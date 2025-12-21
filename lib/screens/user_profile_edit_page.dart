@@ -27,7 +27,13 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
   String? _currentProfileImageUrl;
   Uint8List? _newProfileImageBytes;
   String? _profileImageBase64;
+  String _profileImageMime = 'jpeg';
   final ImagePicker _picker = ImagePicker();
+
+  String _withCacheBust(String url) {
+    final separator = url.contains('?') ? '&' : '?';
+    return '$url${separator}v=${DateTime.now().millisecondsSinceEpoch}';
+  }
 
   @override
   void initState() {
@@ -73,9 +79,16 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
 
       if (pickedFile != null) {
         final bytes = await pickedFile.readAsBytes();
+        String mime = 'jpeg';
+        final name = pickedFile.name.toLowerCase();
+        if (name.endsWith('.png')) mime = 'png';
+        if (name.endsWith('.gif')) mime = 'gif';
+        if (name.endsWith('.webp')) mime = 'webp';
+        if (name.endsWith('.jpg') || name.endsWith('.jpeg')) mime = 'jpeg';
         setState(() {
           _newProfileImageBytes = bytes;
           _profileImageBase64 = base64Encode(bytes);
+          _profileImageMime = mime;
         });
       }
     } catch (e) {
@@ -103,7 +116,7 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
 
       // Add profile image if selected
       if (_profileImageBase64 != null && _profileImageBase64!.isNotEmpty) {
-        requestBody['profile_image'] = 'data:image/jpeg;base64,$_profileImageBase64';
+        requestBody['profile_image'] = 'data:image/$_profileImageMime;base64,$_profileImageBase64';
       }
 
       final response = await request.postJson(
@@ -120,6 +133,11 @@ class _UserProfileEditPageState extends State<UserProfileEditPage> {
           
           // Get new image URL from response if available
           String? newImageUrl = response['new_profile_image_url'];
+          final bool imageUpdated = _profileImageBase64 != null && _profileImageBase64!.isNotEmpty;
+          if (imageUpdated && (newImageUrl ?? _currentProfileImageUrl) != null) {
+            final rawUrl = newImageUrl ?? _currentProfileImageUrl!;
+            newImageUrl = _withCacheBust(rawUrl);
+          }
           
           userProvider.setUser(
             userProvider.username ?? '',

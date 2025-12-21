@@ -8,7 +8,7 @@ import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
 import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
-import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -369,7 +369,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: SequenceLoader(size: 50)),
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
     final result = await ChatService.createChatWithUser(
@@ -469,7 +469,7 @@ class _CoachBookingsPageState extends State<CoachBookingsPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SequenceLoader(size: 60),
+          const CircularProgressIndicator(),
           const SizedBox(height: 16),
           const Text(
             'Memuat booking...',

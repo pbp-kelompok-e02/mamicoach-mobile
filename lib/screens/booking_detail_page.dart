@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
-import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 

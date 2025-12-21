@@ -9,7 +9,7 @@ import 'package:mamicoach_mobile/features/review/services/review_service.dart';
 import 'package:mamicoach_mobile/models/booking.dart';
 import 'package:mamicoach_mobile/services/booking_service.dart';
 import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
-import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -354,7 +354,7 @@ class _MyBookingsPageState extends State<MyBookingsPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SequenceLoader(size: 60),
+          const CircularProgressIndicator(),
           const SizedBox(height: 16),
           const Text(
             'Memuat booking...',

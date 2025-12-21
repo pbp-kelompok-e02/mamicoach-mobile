@@ -9,6 +9,7 @@ import 'package:mamicoach_mobile/core/constants/api_constants.dart'
     as api_constants;
 import 'package:mamicoach_mobile/utils/snackbar_helper.dart';
 import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
+import 'package:mamicoach_mobile/screens/profile_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -56,25 +57,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Profil Saya',
                   subtitle: userProvider.username ?? 'Lihat dan edit profil',
                   onTap: () {
-                    // Navigate to profile
-                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ProfilePage(),
+                      ),
+                    );
                   },
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
                   icon: Icons.email_outlined,
-                  title: 'Email',
+                  title: 'Username',
                   subtitle: userProvider.username ?? '-',
                   onTap: null,
-                ),
-                _buildDivider(),
-                _buildSettingsTile(
-                  icon: Icons.lock_outline,
-                  title: 'Ubah Password',
-                  subtitle: 'Perbarui password akun Anda',
-                  onTap: () {
-                    _showChangePasswordDialog(context);
-                  },
                 ),
               ]),
             ],
@@ -162,18 +158,6 @@ class _SettingsPageState extends State<SettingsPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => _showDeleteAccountDialog(context),
-                      child: const Text(
-                        'Hapus Akun',
-                        style: TextStyle(
-                          fontFamily: 'Quicksand',
-                          color: Colors.red,
-                          fontSize: 12,
                         ),
                       ),
                     ),

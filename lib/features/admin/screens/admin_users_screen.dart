@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
-import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -80,7 +80,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               child: Consumer<UserProvider>(
                 builder: (context, provider, child) {
                   if (provider.isLoading && provider.users.isEmpty) {
-                    return const Center(child: SequenceLoader(size: 50));
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (provider.error != null && provider.users.isEmpty) {

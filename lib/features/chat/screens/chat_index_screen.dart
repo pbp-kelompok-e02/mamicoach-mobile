@@ -4,7 +4,7 @@ import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_session_entry.dart';
 import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
-import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -124,7 +124,7 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
           _buildSearchBar(),
           Expanded(
             child: _isLoading && _sessions.isEmpty
-                ? const Center(child: SequenceLoader(size: 50))
+                ? const Center(child: CircularProgressIndicator())
                 : _filteredSessions.isEmpty
                 ? _buildEmptyState()
                 : RefreshIndicator(

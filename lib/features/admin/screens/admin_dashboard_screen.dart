@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/sequence_loader.dart';
+
 import '../providers/admin_provider.dart';
 import '../models/dashboard_stats.dart';
 
@@ -49,7 +49,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       body: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.stats == null) {
-            return const Center(child: SequenceLoader(size: 60));
+            return const Center(child: CircularProgressIndicator());
           }
 
           final stats = provider.stats ?? DashboardStats.empty();
