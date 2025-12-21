@@ -246,12 +246,14 @@ class PaymentMethod {
         displayName: 'BSI Virtual Account',
         midtransType: 'bsi_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/bsi.png',
       ),
       PaymentMethod(
         code: 'other_va',
         displayName: 'Other Virtual Account',
         midtransType: 'other_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/other.png',
       ),
       
       // Credit Card
@@ -260,6 +262,7 @@ class PaymentMethod {
         displayName: 'Credit Card',
         midtransType: 'credit_card',
         category: 'credit_card',
+        logoUrl: '$_logoBaseUrl/credit_card.png',
       ),
       
       // Convenience Store
@@ -291,6 +294,7 @@ class PaymentMethod {
         displayName: 'Kredivo',
         midtransType: 'kredivo',
         category: 'installment',
+        logoUrl: '$_logoBaseUrl/kredivo.png',
       ),
     ];
   }
