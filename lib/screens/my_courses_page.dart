@@ -14,7 +14,6 @@ import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
 
 class MyCoursesPage extends StatefulWidget {
   const MyCoursesPage({super.key});
@@ -24,10 +23,12 @@ class MyCoursesPage extends StatefulWidget {
 }
 
 class _MyCoursesPageState extends State<MyCoursesPage> {
+  final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   List<Course> _courses = [];
   Map<String, dynamic>? _pagination;
   bool _isInitialLoading = true;
+  bool _isLoadingMore = false;
   bool _isRefreshing = false;
   String? _errorMessage;
   bool _isConnectionError = false;
@@ -35,10 +36,33 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _loadCourses();
   }
 
-  Future<void> _loadCourses({bool isRefresh = false}) async {
+  void _onScroll() {
+    if (_isLoadingMore || _isInitialLoading) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreCourses();
+    }
+  }
+
+  Future<void> _loadMoreCourses() async {
+    if (_isLoadingMore || _isInitialLoading) return;
+    if (_pagination == null || _pagination!['has_next'] != true) return;
+
+    _isLoadingMore = true;
+    setState(() {});
+
+    _currentPage++;
+    await _loadCourses(isLoadMore: true);
+  }
+
+  Future<void> _loadCourses({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
     if (isRefresh) {
       setState(() => _isRefreshing = true);
     }
@@ -54,9 +78,18 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
           courses.add(Course.fromJson(d));
         }
         setState(() {
-          _courses = courses;
+          if (isLoadMore) {
+            final existingIds = _courses.map((c) => c.id).toSet();
+            final newCourses = courses
+                .where((c) => !existingIds.contains(c.id))
+                .toList();
+            _courses.addAll(newCourses);
+          } else {
+            _courses = courses;
+          }
           _pagination = response['pagination'];
           _isInitialLoading = false;
+          _isLoadingMore = false;
           _isRefreshing = false;
         });
       }
@@ -65,6 +98,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
       if (mounted) {
         setState(() {
           _isInitialLoading = false;
+          _isLoadingMore = false;
           _isRefreshing = false;
           _errorMessage = e.toString().replaceAll('Exception: ', '');
           _isConnectionError =
@@ -120,6 +154,7 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
         body: CustomRefreshIndicator(
           onRefresh: () async {
             _currentPage = 1;
+            _courses = [];
             await _loadCourses(isRefresh: true);
           },
           color: AppColors.primaryGreen,
@@ -209,43 +244,45 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
 
                         Expanded(
                           child: ListView.builder(
+                            controller: _scrollController,
                             padding: const EdgeInsets.all(16),
-                            itemCount: _courses.length,
+                            itemCount:
+                                _courses.length +
+                                (_isLoadingMore ? 1 : 0) +
+                                (_pagination != null &&
+                                        _pagination!['has_next'] != true
+                                    ? 1
+                                    : 0),
                             itemBuilder: (context, index) {
-                              return _buildCourseCard(_courses[index]);
+                              if (index < _courses.length) {
+                                return _buildCourseCard(_courses[index]);
+                              } else if (_isLoadingMore) {
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primaryGreen,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Center(
+                                    child: Text(
+                                      'Semua kelas telah ditampilkan',
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        color: AppColors.darkGrey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),
-
-                        // Pagination
-                        // Pagination is kept inside the Stack but outside Expanded ListView
-                        if (_pagination != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: PaginationControls(
-                              currentPage: _pagination!['current_page'],
-                              totalPages: _pagination!['total_pages'],
-                              hasPrevious: _pagination!['has_previous'],
-                              hasNext: _pagination!['has_next'],
-                              isLoading: _isRefreshing || _isInitialLoading,
-                              onPrevious: () {
-                                if (_pagination!['has_previous']) {
-                                  setState(() {
-                                    _currentPage--;
-                                  });
-                                  _loadCourses(isRefresh: true);
-                                }
-                              },
-                              onNext: () {
-                                if (_pagination!['has_next']) {
-                                  setState(() {
-                                    _currentPage++;
-                                  });
-                                  _loadCourses(isRefresh: true);
-                                }
-                              },
-                            ),
-                          ),
                       ],
                     ),
                     if (_isRefreshing)
@@ -446,5 +483,12 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 }

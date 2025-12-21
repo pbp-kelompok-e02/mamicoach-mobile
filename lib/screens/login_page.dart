@@ -38,7 +38,11 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo
-                Image.asset('assets/images/logo.png', height: 100, width: 100),
+                Image.asset(
+                  'assets/images/favicon.png',
+                  height: 100,
+                  width: 100,
+                ),
                 const SizedBox(height: 24),
 
                 // Title
@@ -129,9 +133,9 @@ class _LoginPageState extends State<LoginPage> {
 
                           // Best-effort: register this device token for chat push notifications
                           // if the user has them enabled.
-                          final chatPushEnabled =
-                              await PushNotificationService.instance
-                                  .areChatPushNotificationsEnabled();
+                          final chatPushEnabled = await PushNotificationService
+                              .instance
+                              .areChatPushNotificationsEnabled();
                           if (chatPushEnabled) {
                             await PushNotificationService.instance
                                 .registerTokenWithBackend(request);

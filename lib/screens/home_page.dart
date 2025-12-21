@@ -268,7 +268,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: TextField(
                   decoration: InputDecoration(
-                    hintText: 'Cari kelas atau coach...',
+                    hintText: 'Cari kelas',
                     hintStyle: TextStyle(
                       fontFamily: 'Quicksand',
                       color: AppColors.grey,

@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       // Logo (static, no rotation)
                       Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/favicon.png',
                         width: 200,
                         height: 200,
                       ),
@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                       // Subtitle
                       Text(
-                        'Connect • Learn • Grow',
+                        'Cari Coach, tanya MamiCoach!',
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'Quicksand',

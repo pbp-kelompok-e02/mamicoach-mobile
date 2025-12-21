@@ -5,7 +5,8 @@ import 'package:mamicoach_mobile/constants/colors.dart';
 import 'package:mamicoach_mobile/models/course.dart';
 import 'package:mamicoach_mobile/models/course_detail.dart';
 import 'package:mamicoach_mobile/models/category_model.dart';
-import 'package:mamicoach_mobile/core/constants/api_constants.dart' as api_constants;
+import 'package:mamicoach_mobile/core/constants/api_constants.dart'
+    as api_constants;
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
@@ -310,6 +311,15 @@ class _CourseFormPageState extends State<CourseFormPage> {
                         ),
                         style: const TextStyle(fontFamily: 'Quicksand'),
                         keyboardType: TextInputType.url,
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            if (!value.startsWith('http://') &&
+                                !value.startsWith('https://')) {
+                              return "URL harus diawali dengan http:// atau https://";
+                            }
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 32),
 
@@ -354,9 +364,9 @@ class _CourseFormPageState extends State<CourseFormPage> {
 
                               try {
                                 final response = await request.postJson(
-                                        url,
-                                        jsonEncode(data),
-                                      );
+                                  url,
+                                  jsonEncode(data),
+                                );
 
                                 if (mounted) {
                                   // Debug print

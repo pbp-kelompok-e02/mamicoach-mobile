@@ -68,9 +68,9 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/favicon.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground: "assets/images/favicon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

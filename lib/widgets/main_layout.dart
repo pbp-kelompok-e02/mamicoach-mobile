@@ -77,27 +77,27 @@ class _MainLayoutState extends State<MainLayout> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/favicon.png',
                     height: _isSearching ? 34 : 38,
                     width: _isSearching ? 34 : 38,
                   ),
                   const SizedBox(width: 8),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    child: _isSearching
-                        ? const SizedBox.shrink()
-                        : Text(
-                            widget.title,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryGreen,
-                              fontSize: 20,
-                            ),
-                          ),
-                  ),
+                  // AnimatedSize(
+                  //   duration: const Duration(milliseconds: 200),
+                  //   curve: Curves.easeOut,
+                  //   child: _isSearching
+                  //       ? const SizedBox.shrink()
+                  //       : Text(
+                  //           widget.title,
+                  //           overflow: TextOverflow.ellipsis,
+                  //           style: const TextStyle(
+                  //             fontFamily: 'Quicksand',
+                  //             fontWeight: FontWeight.bold,
+                  //             color: AppColors.primaryGreen,
+                  //             fontSize: 20,
+                  //           ),
+                  //         ),
+                  // ),
                 ],
               ),
             ),
@@ -120,7 +120,7 @@ class _MainLayoutState extends State<MainLayout> {
                           controller: _searchController,
                           autofocus: true,
                           decoration: InputDecoration(
-                            hintText: 'Cari kelas atau coach...',
+                            hintText: 'Cari kelas',
                             hintStyle: TextStyle(
                               fontFamily: 'Quicksand',
                               color: AppColors.grey,
@@ -241,9 +241,9 @@ class _MainLayoutState extends State<MainLayout> {
                                 try {
                                   // Best-effort: unregister device token BEFORE session logout,
                                   // but only if chat push notifications are enabled.
-                                  final enabled =
-                                      await PushNotificationService.instance
-                                          .areChatPushNotificationsEnabled();
+                                  final enabled = await PushNotificationService
+                                      .instance
+                                      .areChatPushNotificationsEnabled();
                                   if (enabled) {
                                     await PushNotificationService.instance
                                         .unregisterTokenWithBackend(request);
@@ -294,7 +294,7 @@ class _MainLayoutState extends State<MainLayout> {
                               }
                             },
                             itemBuilder: (context) => [
-                                const PopupMenuItem<String>(
+                              const PopupMenuItem<String>(
                                 value: 'profile',
                                 child: Row(
                                   children: [
@@ -390,7 +390,7 @@ class _MainLayoutState extends State<MainLayout> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/favicon.png',
                         height: 60,
                         width: 60,
                       ),
@@ -607,15 +607,6 @@ class _MainLayoutState extends State<MainLayout> {
                             builder: (context) => const SettingsPage(),
                           ),
                         );
-                      },
-                    ),
-                    _buildDrawerItem(
-                      context,
-                      icon: Icons.help_outline,
-                      title: 'Bantuan & Dukungan',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navigate to help page
                       },
                     ),
                   ],
