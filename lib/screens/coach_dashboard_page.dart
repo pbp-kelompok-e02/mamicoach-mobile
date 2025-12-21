@@ -583,14 +583,13 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Placeholder action
-                    SnackBarHelper.showSuccessSnackBar(context, "Request Withdraw feature coming soon!");
-                  },
+                  onPressed: null, // No action
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    disabledBackgroundColor: AppColors.primaryGreen,
+                    disabledForegroundColor: Colors.white,
                   ),
                   child: const Text('Request Withdraw'),
                 ),
