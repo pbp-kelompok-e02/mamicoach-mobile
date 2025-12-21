@@ -83,17 +83,10 @@ class AuthCookieRequest extends CookieRequest {
       if (response.containsKey('status')) {
         if (response['status'] == 401) {
           _handleUnauthorized();
-        } else if (response['status'] == 500 || response['status'] >= 500) {
+        } else if (response['status'] is int && response['status'] >= 500) {
           _handleServerError();
           throw Exception(response['error'] ?? 'Server error');
         }
-      }
-
-      // Check for error key in response (common pattern for 500 errors)
-      // If response has 'error' key but no 'success' key, treat as server error
-      if (response.containsKey('error') && !response.containsKey('success')) {
-        Future.microtask(() => _handleServerError());
-        throw Exception(response['error'] ?? 'Server error');
       }
     }
     return response;
