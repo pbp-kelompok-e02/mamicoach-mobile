@@ -146,6 +146,7 @@ class PaymentMethod {
   final String midtransType;
   final String category; // e-wallet, virtual_account, credit_card, etc.
   final String? iconAsset;
+  final String? logoUrl;
 
   PaymentMethod({
     required this.code,
@@ -153,7 +154,10 @@ class PaymentMethod {
     required this.midtransType,
     required this.category,
     this.iconAsset,
+    this.logoUrl,
   });
+
+  static const String _logoBaseUrl = 'https://pbp-e02-mamicoach-master.nimby.fun/logo';
 
   static List<PaymentMethod> getAllMethods() {
     return [
@@ -163,24 +167,28 @@ class PaymentMethod {
         displayName: 'GO-PAY',
         midtransType: 'gopay',
         category: 'e-wallet',
+        logoUrl: '$_logoBaseUrl/gopay.png',
       ),
       PaymentMethod(
         code: 'shopeepay',
         displayName: 'ShopeePay',
         midtransType: 'shopeepay',
         category: 'e-wallet',
+        logoUrl: '$_logoBaseUrl/shopeepay.png',
       ),
       PaymentMethod(
         code: 'dana',
         displayName: 'Dana',
         midtransType: 'dana',
         category: 'e-wallet',
+        logoUrl: '$_logoBaseUrl/dana.png',
       ),
       PaymentMethod(
         code: 'qris',
         displayName: 'QRIS',
         midtransType: 'qris',
         category: 'qr-code',
+        logoUrl: '$_logoBaseUrl/qris.png',
       ),
       
       // Virtual Accounts
@@ -189,54 +197,63 @@ class PaymentMethod {
         displayName: 'BCA Virtual Account',
         midtransType: 'bca_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/bca.png',
       ),
       PaymentMethod(
         code: 'mandiri_va',
         displayName: 'Mandiri Virtual Account',
         midtransType: 'echannel',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/mandiri.png',
       ),
       PaymentMethod(
         code: 'bni_va',
         displayName: 'BNI Virtual Account',
         midtransType: 'bni_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/bni.png',
       ),
       PaymentMethod(
         code: 'bri_va',
         displayName: 'BRI Virtual Account',
         midtransType: 'bri_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/bri.png',
       ),
       PaymentMethod(
         code: 'permata_va',
         displayName: 'Permata Virtual Account',
         midtransType: 'permata_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/permata.png',
       ),
       PaymentMethod(
         code: 'cimb_va',
         displayName: 'CIMB Virtual Account',
         midtransType: 'cimb_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/cimbniaga.png',
       ),
       PaymentMethod(
         code: 'danamon_va',
         displayName: 'Danamon Virtual Account',
         midtransType: 'danamon_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/danamon.png',
       ),
       PaymentMethod(
         code: 'bsi_va',
         displayName: 'BSI Virtual Account',
         midtransType: 'bsi_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/bsi.png',
       ),
       PaymentMethod(
         code: 'other_va',
         displayName: 'Other Virtual Account',
         midtransType: 'other_va',
         category: 'virtual_account',
+        logoUrl: '$_logoBaseUrl/other.png',
       ),
       
       // Credit Card
@@ -245,6 +262,7 @@ class PaymentMethod {
         displayName: 'Credit Card',
         midtransType: 'credit_card',
         category: 'credit_card',
+        logoUrl: '$_logoBaseUrl/credit_card.png',
       ),
       
       // Convenience Store
@@ -253,12 +271,14 @@ class PaymentMethod {
         displayName: 'Indomaret',
         midtransType: 'cstore',
         category: 'convenience_store',
+        logoUrl: '$_logoBaseUrl/indomaret.png',
       ),
       PaymentMethod(
         code: 'alfamart',
         displayName: 'Alfamart',
         midtransType: 'cstore',
         category: 'convenience_store',
+        logoUrl: '$_logoBaseUrl/alfamart.png',
       ),
       
       // Installment
@@ -267,12 +287,14 @@ class PaymentMethod {
         displayName: 'Akulaku',
         midtransType: 'akulaku',
         category: 'installment',
+        logoUrl: '$_logoBaseUrl/akulaku_paylater.png',
       ),
       PaymentMethod(
         code: 'kredivo',
         displayName: 'Kredivo',
         midtransType: 'kredivo',
         category: 'installment',
+        logoUrl: '$_logoBaseUrl/kredivo.png',
       ),
     ];
   }
