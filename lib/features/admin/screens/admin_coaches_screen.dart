@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
+
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -97,7 +98,11 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: AppColors.error,
+                          ),
                           const SizedBox(height: 16),
                           Text(provider.error!),
                           const SizedBox(height: 16),
@@ -168,10 +173,7 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
           const SizedBox(height: 8),
           const Text(
             'Kelola data coach dan verifikasi',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -179,14 +181,20 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
             onChanged: _onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Cari coach...',
-              prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
           ),
         ],
@@ -215,13 +223,17 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
               selectedColor: AppColors.primaryGreen.withOpacity(0.1),
               checkmarkColor: AppColors.primaryGreen,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.primaryGreen
+                    : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
+                  color: isSelected
+                      ? AppColors.primaryGreen
+                      : Colors.grey.shade300,
                 ),
               ),
             ),
@@ -252,7 +264,9 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
-              backgroundImage: coach.avatar != null ? proxyNetworkImageProvider(coach.avatar!) : null,
+              backgroundImage: coach.avatar != null
+                  ? proxyNetworkImageProvider(coach.avatar!)
+                  : null,
               child: coach.avatar == null
                   ? Text(
                       coach.name.isNotEmpty ? coach.name[0].toUpperCase() : '?',
@@ -288,7 +302,11 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
                             ),
                             if (coach.isVerified) ...[
                               const SizedBox(width: 4),
-                              const Icon(Icons.verified, size: 16, color: Colors.blue),
+                              const Icon(
+                                Icons.verified,
+                                size: 16,
+                                color: Colors.blue,
+                              ),
                             ],
                           ],
                         ),
@@ -319,7 +337,11 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Bergabung: ${DateFormat('d MMM yyyy', 'id').format(coach.joinDate)}',
@@ -379,7 +401,11 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_off_outlined, size: 64, color: Colors.grey.shade300),
+          Icon(
+            Icons.person_off_outlined,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 16),
           Text(
             'Tidak ada coach ditemukan',

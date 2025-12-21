@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/constants/colors.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'dart:math' as math;
 
 class CustomRefreshIndicator extends StatefulWidget {
@@ -45,9 +46,9 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
 
   Future<void> _startRefresh() async {
     if (_isRefreshing) return;
-    
+
     setState(() => _isRefreshing = true);
-    
+
     // Animate to trigger distance to show loading spinner
     await _animateTo(widget.triggerDistance);
 
@@ -64,7 +65,7 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
   Future<void> _animateTo(double target) {
     final start = _dragOffset.value;
     _animationController.reset();
-    
+
     final animation = Tween<double>(begin: start, end: target).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
@@ -89,8 +90,9 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
       // Handle dragging back up while pulled down
       if (_dragOffset.value > 0 && notification.scrollDelta != null) {
         if (notification.metrics.extentBefore == 0) {
-           double newOffset = _dragOffset.value - (notification.scrollDelta! * 0.5);
-           _dragOffset.value = newOffset.clamp(0.0, _maxDragOffset);
+          double newOffset =
+              _dragOffset.value - (notification.scrollDelta! * 0.5);
+          _dragOffset.value = newOffset.clamp(0.0, _maxDragOffset);
         }
       }
     } else if (notification is ScrollEndNotification) {
@@ -114,8 +116,11 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
         ValueListenableBuilder<double>(
           valueListenable: _dragOffset,
           builder: (context, offset, _) {
-            final double progress = (offset / widget.triggerDistance).clamp(0.0, 1.0);
-            
+            final double progress = (offset / widget.triggerDistance).clamp(
+              0.0,
+              1.0,
+            );
+
             if (offset == 0 && !_isRefreshing) return const SizedBox.shrink();
 
             return Positioned(
@@ -126,14 +131,7 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
               child: Container(
                 alignment: Alignment.center,
                 child: _isRefreshing
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
-                        ),
-                      )
+                    ? const SequenceLoader(size: 24)
                     : Transform.scale(
                         scale: progress,
                         child: CustomPaint(
@@ -153,17 +151,14 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
         ValueListenableBuilder<double>(
           valueListenable: _dragOffset,
           builder: (context, offset, child) {
-            return Transform.translate(
-              offset: Offset(0, offset),
-              child: child,
-            );
+            return Transform.translate(offset: Offset(0, offset), child: child);
           },
           child: NotificationListener<ScrollNotification>(
             onNotification: _handleScrollNotification,
             child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                physics: const ClampingScrollPhysics(),
-              ),
+              behavior: ScrollConfiguration.of(
+                context,
+              ).copyWith(physics: const ClampingScrollPhysics()),
               child: widget.child,
             ),
           ),
@@ -177,10 +172,7 @@ class _CircleProgressPainter extends CustomPainter {
   final double progress;
   final Color color;
 
-  _CircleProgressPainter({
-    required this.progress,
-    required this.color,
-  });
+  _CircleProgressPainter({required this.progress, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

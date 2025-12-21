@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
+
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -97,7 +98,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: AppColors.error,
+                          ),
                           const SizedBox(height: 16),
                           Text(provider.error!),
                           const SizedBox(height: 16),
@@ -168,10 +173,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           const SizedBox(height: 8),
           const Text(
             'Kelola data pengguna aplikasi',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -179,14 +181,20 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             onChanged: _onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Cari pengguna...',
-              prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
           ),
         ],
@@ -215,13 +223,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               selectedColor: AppColors.primaryGreen.withOpacity(0.1),
               checkmarkColor: AppColors.primaryGreen,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.primaryGreen
+                    : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primaryGreen : Colors.grey.shade300,
+                  color: isSelected
+                      ? AppColors.primaryGreen
+                      : Colors.grey.shade300,
                 ),
               ),
             ),
@@ -252,7 +264,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
-                backgroundImage: user.avatar != null ? proxyNetworkImageProvider(user.avatar!) : null,
+              backgroundImage: user.avatar != null
+                  ? proxyNetworkImageProvider(user.avatar!)
+                  : null,
               child: user.avatar == null
                   ? Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
@@ -297,7 +311,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Bergabung: ${DateFormat('d MMM yyyy', 'id').format(user.joinDate)}',
@@ -307,7 +325,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Icon(Icons.book_online, size: 14, color: AppColors.textSecondary),
+                      const Icon(
+                        Icons.book_online,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${user.totalBookings} Booking',
@@ -332,7 +354,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+        color: isActive
+            ? AppColors.success.withOpacity(0.1)
+            : AppColors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -351,7 +375,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_off_outlined, size: 64, color: Colors.grey.shade300),
+          Icon(
+            Icons.person_off_outlined,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 16),
           Text(
             'Tidak ada pengguna ditemukan',
