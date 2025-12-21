@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+
 import '../providers/admin_provider.dart';
 import '../models/dashboard_stats.dart';
 
@@ -48,11 +49,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       body: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.stats == null) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           final stats = provider.stats ?? DashboardStats.empty();
@@ -224,7 +221,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -263,7 +263,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 : BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
-                      maxY: stats.bookingsTrend
+                      maxY:
+                          stats.bookingsTrend
                               .map((e) => e.value)
                               .reduce((a, b) => a > b ? a : b) *
                           1.2,
@@ -317,7 +318,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       gridData: const FlGridData(show: false),
                       borderData: FlBorderData(show: false),
-                      barGroups: stats.bookingsTrend.asMap().entries.map((entry) {
+                      barGroups: stats.bookingsTrend.asMap().entries.map((
+                        entry,
+                      ) {
                         return BarChartGroupData(
                           x: entry.key,
                           barRods: [
@@ -398,7 +401,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -558,10 +564,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('Lihat Semua'),
-              ),
+              TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
             ],
           ),
           const SizedBox(height: 16),
@@ -644,11 +647,7 @@ class _StatCard extends StatelessWidget {
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 22,
-            ),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,11 +778,7 @@ class _QuickActionButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 28,
-            ),
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
             Text(
               label,
@@ -826,11 +821,7 @@ class _ActivityItem extends StatelessWidget {
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
+          child: Icon(icon, color: color, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -857,10 +848,7 @@ class _ActivityItem extends StatelessWidget {
         ),
         Text(
           time,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.textTertiary,
-          ),
+          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
         ),
       ],
     );

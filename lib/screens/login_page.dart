@@ -127,9 +127,15 @@ class _LoginPageState extends State<LoginPage> {
                             profilePicture: response['profile_image'],
                           );
 
-                          // Best-effort: register this device token for push notifications.
-                          await PushNotificationService.instance
-                              .registerTokenWithBackend(request);
+                          // Best-effort: register this device token for chat push notifications
+                          // if the user has them enabled.
+                          final chatPushEnabled =
+                              await PushNotificationService.instance
+                                  .areChatPushNotificationsEnabled();
+                          if (chatPushEnabled) {
+                            await PushNotificationService.instance
+                                .registerTokenWithBackend(request);
+                          }
 
                           SnackBarHelper.showSuccessSnackBar(
                             context,

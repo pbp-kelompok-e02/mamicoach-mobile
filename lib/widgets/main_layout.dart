@@ -239,9 +239,15 @@ class _MainLayoutState extends State<MainLayout> {
                                 );
                               } else if (value == 'logout') {
                                 try {
-                                  // Best-effort: unregister device token BEFORE session logout.
-                                  await PushNotificationService.instance
-                                      .unregisterTokenWithBackend(request);
+                                  // Best-effort: unregister device token BEFORE session logout,
+                                  // but only if chat push notifications are enabled.
+                                  final enabled =
+                                      await PushNotificationService.instance
+                                          .areChatPushNotificationsEnabled();
+                                  if (enabled) {
+                                    await PushNotificationService.instance
+                                        .unregisterTokenWithBackend(request);
+                                  }
 
                                   final response = await request.logout(
                                     "${ApiConstants.baseUrl}/auth/api_logout/",
@@ -288,17 +294,17 @@ class _MainLayoutState extends State<MainLayout> {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
+                                const PopupMenuItem<String>(
                                 value: 'profile',
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.person,
+                                      Icons.dashboard,
                                       color: AppColors.primaryGreen,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      'Profil Saya',
+                                      'Dashboard',
                                       style: TextStyle(
                                         fontFamily: 'Quicksand',
                                         fontWeight: FontWeight.w500,
