@@ -18,6 +18,7 @@ import 'package:mamicoach_mobile/features/admin/providers/coach_provider.dart';
 import 'package:mamicoach_mobile/core/network/auth_cookie_request.dart';
 import 'package:mamicoach_mobile/core/notifications/push_notification_service.dart';
 import 'package:mamicoach_mobile/screens/errors/server_error_500_page.dart';
+import 'package:mamicoach_mobile/screens/errors/no_connection_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -76,6 +77,7 @@ class _MyAppState extends State<MyApp> {
         debugShowCheckedModeBanner: false,
         routes: {
           ServerError500Page.routeName: (_) => const ServerError500Page(),
+          NoConnectionPage.routeName: (_) => const NoConnectionPage(),
         },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
