@@ -294,17 +294,17 @@ class _MainLayoutState extends State<MainLayout> {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
+                                const PopupMenuItem<String>(
                                 value: 'profile',
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.person,
+                                      Icons.dashboard,
                                       color: AppColors.primaryGreen,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      'Profil Saya',
+                                      'Dashboard',
                                       style: TextStyle(
                                         fontFamily: 'Quicksand',
                                         fontWeight: FontWeight.w500,
