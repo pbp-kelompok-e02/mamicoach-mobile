@@ -329,3 +329,4 @@ Link di bawah ini merujuk ke proyek backend & desain MamiCoach.
 - **Figma Design:** [https://www.figma.com/design/Ysa8K8heNxQcG8eyjdRAXD/TK-PBP-E02](https://www.figma.com/design/Ysa8K8heNxQcG8eyjdRAXD/TK-PBP-E02?node-id=0-1&t=q5cEKERHtkHz8QlB-1)
 - **ERD (Entity Relationship Diagram):** [https://dbdiagram.io/d/68e6390fd2b621e422d55017](https://dbdiagram.io/d/68e6390fd2b621e422d55017)
 - **APK Download:** [https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575/installable-artifacts/6699d484f9b882a2/public-install-page/f76fc96d10478f06766ae8cf6eae499a](https://app.bitrise.io/app/4ce4a436-2137-4ff8-a52a-9c66c38e7575/installable-artifacts/6699d484f9b882a2/public-install-page/f76fc96d10478f06766ae8cf6eae499a)
+- **Link Video:** [https://youtu.be/XRrZFGfUpcw](https://youtu.be/XRrZFGfUpcw)
