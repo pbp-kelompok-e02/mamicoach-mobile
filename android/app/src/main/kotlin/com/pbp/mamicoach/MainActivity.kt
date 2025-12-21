@@ -1,4 +1,4 @@
-package com.example.mamicoach_mobile
+package com.pbp.mamicoach
 
 import io.flutter.embedding.android.FlutterActivity
 
