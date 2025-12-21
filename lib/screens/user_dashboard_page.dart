@@ -10,10 +10,10 @@ import 'package:mamicoach_mobile/features/chat/widgets/chat_helper.dart'; // Ens
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
 import 'package:mamicoach_mobile/features/review/models/reviews.dart';
 import 'package:mamicoach_mobile/features/review/screens/review_form_screen.dart';
 import 'package:mamicoach_mobile/features/review/services/review_service.dart';
+import 'package:mamicoach_mobile/screens/payment_method_selection_page.dart';
 
 class UserDashboardPage extends StatefulWidget {
   const UserDashboardPage({super.key});
@@ -132,11 +132,11 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
               const SizedBox(height: 16),
 
               // 2. Booking Sections
-              _buildBookingSection('Unpaid Bookings', unpaidBookings, 'No unpaid bookings at the moment'),
+              _buildBookingSection('Unpaid Bookings', unpaidBookings, 'No unpaid bookings at the moment', isUnpaid: true),
               const SizedBox(height: 16),
               _buildBookingSection('In Process Bookings', inProcessBookings, 'No in-process bookings', isProcess: true),
               const SizedBox(height: 16),
-              _buildBookingSection('Pending Bookings', pendingBookings, 'No pending bookings at the moment'),
+              _buildBookingSection('Pending Bookings', pendingBookings, 'No pending bookings at the moment', isPending: true),
               const SizedBox(height: 16),
               _buildBookingSection('Completed Bookings', completedBookings, 'No completed bookings yet', isCompleted: true),
               const SizedBox(height: 16),
@@ -218,7 +218,7 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
     );
   }
 
-  Widget _buildBookingSection(String title, List<Booking> bookings, String emptyMessage, {bool isProcess = false, bool isCancelled = false, bool isCompleted = false}) {
+  Widget _buildBookingSection(String title, List<Booking> bookings, String emptyMessage, {bool isProcess = false, bool isCancelled = false, bool isCompleted = false, bool isPending = false, bool isUnpaid = false}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -257,14 +257,15 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
             )
           else
             Column(
-              children: bookings.map((b) => _buildBookingItem(b, isProcess: isProcess, isCancelled: isCancelled, isCompleted: isCompleted)).toList(),
+              children: bookings.map((b) => _buildBookingItem(b, isProcess: isProcess, isCancelled: isCancelled, isCompleted: isCompleted, isPending: isPending, isUnpaid: isUnpaid)).toList(),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingItem(Booking booking, {bool isProcess = false, bool isCancelled = false, bool isCompleted = false}) {
+  Widget _buildBookingItem(Booking booking, {bool isProcess = false, bool isCancelled = false, bool isCompleted = false, bool isPending = false, bool isUnpaid = false}) {
+
     // Basic date formatting
     final startStr = '${booking.startDatetime.day} ${_monthName(booking.startDatetime.month)} ${DateFormat('HH:mm').format(booking.startDatetime)}';
     final endStr = '${booking.endDatetime.day} ${_monthName(booking.endDatetime.month)} ${DateFormat('HH:mm').format(booking.endDatetime)}';
@@ -344,6 +345,18 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                ),
                child: const Text('Cancelled', style: TextStyle(color: Colors.red, fontSize: 12)),
              ),
+          if (isPending)
+            Container(
+               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+               decoration: BoxDecoration(
+                 color: const Color(0xFFD1FAE5), // Light green background
+                 borderRadius: BorderRadius.circular(4),
+               ),
+               child: const Text(
+                 'Waiting for Coach Confirmation', 
+                 style: TextStyle(color: AppColors.primaryGreen, fontSize: 12),
+               ),
+             ),
           if (isCompleted)
              ElevatedButton(
                 onPressed: () => _openReviewForBooking(booking),
@@ -357,9 +370,113 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
                 ),
                 child: const Text('Review', style: TextStyle(fontWeight: FontWeight.bold)),
              ),
+          if (isUnpaid)
+             Expanded(
+               child: Row(
+               mainAxisAlignment: MainAxisAlignment.end,
+               children: [
+                 ElevatedButton(
+                   onPressed: () => _navigateToPayment(booking),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.orange,
+                     foregroundColor: Colors.white,
+                     visualDensity: VisualDensity.compact,
+                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                     minimumSize: const Size(0, 36),
+                   ),
+                   child: const Text('Pay Now', style: TextStyle(fontWeight: FontWeight.bold)),
+                 ),
+                 const SizedBox(width: 8),
+                 ElevatedButton(
+                   onPressed: () => _cancelBooking(booking),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.red,
+                     foregroundColor: Colors.white,
+                     visualDensity: VisualDensity.compact,
+                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                     minimumSize: const Size(0, 36),
+                   ),
+                   child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                 ),
+               ],
+             ),
+             ),
         ],
       ),
     );
+  }
+
+  Future<void> _cancelBooking(Booking booking) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Batalkan Booking?',
+          style: TextStyle(
+            fontFamily: 'Quicksand',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to cancel this booking? This action cannot be undone.',
+          style: TextStyle(fontFamily: 'Quicksand'),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+             style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[300],
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text('Tidak, Kembali'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text('Ya, Batalkan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final request = context.read<CookieRequest>();
+        await BookingService.cancelBooking(request, booking.id);
+
+        if (mounted) {
+          SnackBarHelper.showSuccessSnackBar(context, 'Booking berhasil dibatalkan');
+          _loadData();
+        }
+      } catch (e) {
+        if (mounted) {
+           SnackBarHelper.showErrorSnackBar(context, e.toString().replaceAll('Exception: ', ''));
+        }
+      }
+    }
+  }
+
+  Future<void> _navigateToPayment(Booking booking) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodSelectionPage(
+          bookingId: booking.id,
+          amount: booking.price.toInt(),
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadData();
+    }
   }
 
   void _openReviewForBooking(Booking booking) async {

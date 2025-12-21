@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:mamicoach_mobile/constants/colors.dart';
 
 class SequenceLoader extends StatefulWidget {
   final double size;
   final Color? color;
+  final Duration frameDuration;
 
   const SequenceLoader({
     super.key,
     this.size = 50.0,
     this.color,
+    this.frameDuration = const Duration(milliseconds: 150),
   });
 
   @override
@@ -18,30 +19,34 @@ class SequenceLoader extends StatefulWidget {
 class _SequenceLoaderState extends State<SequenceLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
+  int _currentFrame = 0;
+
+  static const List<String> _frames = [
+    'assets/images/tile000.png',
+    'assets/images/tile001.png',
+    'assets/images/tile002.png',
+    'assets/images/tile003.png',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
-
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    _controller =
+        AnimationController(
+            vsync: this,
+            duration: Duration(
+              milliseconds:
+                  widget.frameDuration.inMilliseconds * _frames.length,
+            ),
+          )
+          ..addListener(() {
+            final frame =
+                (_controller.value * _frames.length).floor() % _frames.length;
+            if (frame != _currentFrame) {
+              setState(() => _currentFrame = frame);
+            }
+          })
+          ..repeat();
   }
 
   @override
@@ -52,51 +57,14 @@ class _SequenceLoaderState extends State<SequenceLoader>
 
   @override
   Widget build(BuildContext context) {
-    final loaderColor = widget.color ?? AppColors.primaryGreen;
-
     return Center(
-      child: SizedBox(
+      child: Image.asset(
+        _frames[_currentFrame],
         width: widget.size,
         height: widget.size,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Pulse effect
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _opacityAnimation.value,
-                  child: Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: loaderColor.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            // Center dot
-            Container(
-              width: widget.size * 0.4,
-              height: widget.size * 0.4,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: loaderColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: loaderColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        fit: BoxFit.contain,
+        // Disable gapless playback for smoother sprite animation
+        gaplessPlayback: true,
       ),
     );
   }
@@ -132,12 +100,10 @@ class _ShimmerPlaceholderState extends State<ShimmerPlaceholder>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

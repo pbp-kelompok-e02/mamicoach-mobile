@@ -4,6 +4,7 @@ import 'package:mamicoach_mobile/features/chat/models/chat_models.dart';
 import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_session_entry.dart';
 import 'package:mamicoach_mobile/features/chat/screens/chat_detail_screen.dart';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -84,10 +85,10 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
         final username = otherUser.username.toLowerCase();
         final lastMessage = session.lastMessage?.content.toLowerCase() ?? '';
         final query = _searchQuery.toLowerCase();
-        
-        return name.contains(query) || 
-               username.contains(query) || 
-               lastMessage.contains(query);
+
+        return name.contains(query) ||
+            username.contains(query) ||
+            lastMessage.contains(query);
       }).toList();
     }
   }
@@ -125,21 +126,21 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
             child: _isLoading && _sessions.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredSessions.isEmpty
-                    ? _buildEmptyState()
-                    : RefreshIndicator(
-                        onRefresh: () => _loadSessions(),
-                        child: ListView.builder(
-                          itemCount: _filteredSessions.length,
-                          itemBuilder: (context, index) {
-                            final session = _filteredSessions[index];
-                            return ChatSessionEntry(
-                              session: session,
-                              currentUserId: _currentUserId ?? 0,
-                              onTap: () => _openChat(session),
-                            );
-                          },
-                        ),
-                      ),
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: () => _loadSessions(),
+                    child: ListView.builder(
+                      itemCount: _filteredSessions.length,
+                      itemBuilder: (context, index) {
+                        final session = _filteredSessions[index];
+                        return ChatSessionEntry(
+                          session: session,
+                          currentUserId: _currentUserId ?? 0,
+                          onTap: () => _openChat(session),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -207,9 +208,7 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _searchQuery.isEmpty
-                ? 'No conversations yet'
-                : 'No results found',
+            _searchQuery.isEmpty ? 'No conversations yet' : 'No results found',
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey[600],
@@ -221,10 +220,7 @@ class _ChatIndexScreenState extends State<ChatIndexScreen> {
             _searchQuery.isEmpty
                 ? 'Start a conversation with a coach'
                 : 'Try a different search term',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),

@@ -9,6 +9,7 @@ import 'package:mamicoach_mobile/features/chat/services/chat_service.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_details_header.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_list.dart';
 import 'package:mamicoach_mobile/features/chat/widgets/chat_input_box.dart';
+import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 

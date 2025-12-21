@@ -25,8 +25,10 @@ class ProfilePage extends StatelessWidget {
       );
     }
 
-    // Langsung tampilkan halaman edit profil sesuai tipe user
+    // Tampilkan dashboard sesuai tipe user
     return userProvider.isCoach
+        ? const CoachDashboardPage()
+        : const UserDashboardPage();
         ? const CoachDashboardPage()
         : const UserDashboardPage();
   }

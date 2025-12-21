@@ -294,7 +294,7 @@ class _MainLayoutState extends State<MainLayout> {
                               }
                             },
                             itemBuilder: (context) => [
-                              const PopupMenuItem<String>(
+                                const PopupMenuItem<String>(
                                 value: 'profile',
                                 child: Row(
                                   children: [
