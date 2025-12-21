@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:671775280090:android:71ff98837030885bfd8ee3",
+        "mobilesdk_app_id": "1:671775280090:android:cd2121fcb294709bfd8ee3",
         "android_client_info": {
-          "package_name": "com.example.mamicoach_mobile"
+          "package_name": "com.pbp.mamicoach"
         }
       },
       "oauth_client": [],

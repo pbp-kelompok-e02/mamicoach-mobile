@@ -13,6 +13,9 @@ class PaymentProvider extends ChangeNotifier {
   String? _error;
   String _currentFilter = 'all';
   String _searchQuery = '';
+  int _currentPage = 1;
+  int _perPage = 10;
+  bool _isLoadingMore = false;
 
   // Getters
   List<Payment> get payments => _payments;
@@ -22,6 +25,8 @@ class PaymentProvider extends ChangeNotifier {
   String? get error => _error;
   String get currentFilter => _currentFilter;
   String get searchQuery => _searchQuery;
+  bool get hasMore => _pagination?.hasNext ?? false;
+  bool get isLoadingMore => _isLoadingMore;
 
   /// Fetch payments with optional filtering
   Future<void> fetchPayments({
@@ -65,6 +70,44 @@ class PaymentProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  /// Load more payments (pagination)
+  Future<void> loadMore() async {
+    if (_isLoadingMore || !hasMore || _isLoading) return;
+
+    debugPrint('[ADMIN PAYMENT PROVIDER] 📄 Loading more payments...');
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _currentPage + 1;
+      final response = await _apiService.getPayments(
+        status: _currentFilter,
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        page: nextPage,
+        perPage: _perPage,
+      );
+
+      if (response['status'] == true) {
+        final data = response['data'];
+        final paymentsList = data['payments'] as List<dynamic>? ?? [];
+        final newPayments = paymentsList.map((json) => Payment.fromJson(json)).toList();
+        
+        _payments.addAll(newPayments);
+        _currentPage = nextPage;
+        
+        if (data['pagination'] != null) {
+          _pagination = PaymentPagination.fromJson(data['pagination']);
+        }
+        debugPrint('[ADMIN PAYMENT PROVIDER] ✅ Loaded ${newPayments.length} more payments');
+      }
+    } catch (e) {
+      debugPrint('[ADMIN PAYMENT PROVIDER] ❌ Error loading more payments: $e');
+    }
+
+    _isLoadingMore = false;
     notifyListeners();
   }
 
@@ -165,7 +208,7 @@ class PaymentProvider extends ChangeNotifier {
     return {
       'pending': pending,
       'successful': successful,
-      'failed': failed,
+      'failure': failed,
       'total': _payments.length,
     };
   }

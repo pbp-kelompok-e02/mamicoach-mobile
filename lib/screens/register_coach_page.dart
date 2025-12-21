@@ -119,6 +119,15 @@ class _RegisterCoachPageState extends State<RegisterCoachPage> {
       return;
     }
 
+    final url = _certUrlController.text;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        'URL harus diawali dengan http:// atau https://',
+      );
+      return;
+    }
+
     setState(() {
       _certifications.add({
         'name': _certNameController.text,

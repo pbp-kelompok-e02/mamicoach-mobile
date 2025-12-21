@@ -17,6 +17,7 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   String _selectedFilter = 'all';
   final List<Map<String, String>> _filters = [
     {'label': 'Semua', 'value': 'all'},
@@ -30,12 +31,21 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<UserProvider>().fetchUsers();
     });
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent * 0.9) {
+      context.read<UserProvider>().loadMore();
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -110,9 +120,19 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: provider.users.length,
+                    itemCount: provider.users.length + (provider.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == provider.users.length) {
+                        // Loading indicator at the end
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
                       final user = provider.users[index];
                       return _buildUserCard(user);
                     },

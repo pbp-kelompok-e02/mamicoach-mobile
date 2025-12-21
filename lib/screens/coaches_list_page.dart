@@ -14,8 +14,6 @@ import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
-import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
-
 class CoachesListPage extends StatefulWidget {
   const CoachesListPage({super.key});
 
@@ -25,6 +23,7 @@ class CoachesListPage extends StatefulWidget {
 
 class _CoachesListPageState extends State<CoachesListPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String? _selectedExpertiseName;
   bool? _verifiedOnly;
   String _sortBy = '-rating';
@@ -33,6 +32,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
   List<Coach> _coaches = [];
   Map<String, dynamic>? _pagination;
   bool _isInitialLoading = true;
+  bool _isLoadingMore = false;
   bool _isRefreshing = false;
   String? _errorMessage;
   bool _isConnectionError = false;
@@ -40,11 +40,34 @@ class _CoachesListPageState extends State<CoachesListPage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _fetchCategories();
     _loadCoaches();
   }
 
-  Future<void> _loadCoaches({bool isRefresh = false}) async {
+  void _onScroll() {
+    if (_isLoadingMore || _isInitialLoading) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreCoaches();
+    }
+  }
+
+  Future<void> _loadMoreCoaches() async {
+    if (_isLoadingMore || _isInitialLoading) return;
+    if (_pagination == null || _pagination!['has_next'] != true) return;
+
+    _isLoadingMore = true;
+    setState(() {});
+
+    _currentPage++;
+    await _loadCoaches(isLoadMore: true);
+  }
+
+  Future<void> _loadCoaches({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
     if (isRefresh) {
       setState(() => _isRefreshing = true);
     }
@@ -53,9 +76,19 @@ class _CoachesListPageState extends State<CoachesListPage> {
       final data = await fetchCoaches(request);
       if (mounted) {
         setState(() {
-          _coaches = data['coaches'];
+          if (isLoadMore) {
+            // Filter out duplicates by checking existing IDs
+            final existingIds = _coaches.map((c) => c.id).toSet();
+            final newCoaches = (data['coaches'] as List<Coach>)
+                .where((c) => !existingIds.contains(c.id))
+                .toList();
+            _coaches.addAll(newCoaches);
+          } else {
+            _coaches = data['coaches'];
+          }
           _pagination = data['pagination'];
           _isInitialLoading = false;
+          _isLoadingMore = false;
           _isRefreshing = false;
         });
       }
@@ -63,6 +96,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
       if (mounted) {
         setState(() {
           _isInitialLoading = false;
+          _isLoadingMore = false;
           _isRefreshing = false;
           _errorMessage = e.toString();
           _isConnectionError =
@@ -126,6 +160,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
       _verifiedOnly = null;
       _sortBy = '-rating';
       _currentPage = 1;
+      _coaches = [];
     });
     _loadCoaches();
   }
@@ -133,6 +168,7 @@ class _CoachesListPageState extends State<CoachesListPage> {
   void _applySearch() {
     setState(() {
       _currentPage = 1;
+      _coaches = [];
     });
     _loadCoaches();
   }
@@ -157,10 +193,12 @@ class _CoachesListPageState extends State<CoachesListPage> {
                         child: CustomRefreshIndicator(
                           onRefresh: () async {
                             _currentPage = 1;
+                            _coaches = [];
                             await _loadCoaches(isRefresh: true);
                           },
                           color: AppColors.primaryGreen,
                           child: CustomScrollView(
+                            controller: _scrollController,
                             slivers: [
                               // Search and Filters (Scrollable)
                               SliverToBoxAdapter(
@@ -278,7 +316,9 @@ class _CoachesListPageState extends State<CoachesListPage> {
                                                   _selectedExpertiseName =
                                                       value;
                                                   _currentPage = 1;
+                                                  _coaches = [];
                                                 });
+                                                _loadCoaches();
                                               },
                                               itemBuilder: (context) => [
                                                 const PopupMenuItem(
@@ -311,7 +351,9 @@ class _CoachesListPageState extends State<CoachesListPage> {
                                                       ? true
                                                       : null;
                                                   _currentPage = 1;
+                                                  _coaches = [];
                                                 });
+                                                _loadCoaches();
                                               },
                                               selectedColor: AppColors
                                                   .primaryGreen
@@ -344,13 +386,21 @@ class _CoachesListPageState extends State<CoachesListPage> {
                                                 setState(() {
                                                   _sortBy = value;
                                                   _currentPage = 1;
+                                                  _coaches = [];
                                                 });
+                                                _loadCoaches();
                                               },
                                               itemBuilder: (context) => const [
                                                 PopupMenuItem(
                                                   value: '-rating',
                                                   child: Text(
                                                     'Rating Tertinggi',
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'rating',
+                                                  child: Text(
+                                                    'Rating Terendah',
                                                   ),
                                                 ),
                                                 PopupMenuItem(
@@ -361,8 +411,14 @@ class _CoachesListPageState extends State<CoachesListPage> {
                                                   ),
                                                 ),
                                                 PopupMenuItem(
-                                                  value: 'username',
-                                                  child: Text('Nama A-Z'),
+                                                  value: '-rating_count',
+                                                  child: Text(
+                                                    'Ulasan Terbanyak',
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: '-created_at',
+                                                  child: Text('Terbaru'),
                                                 ),
                                               ],
                                             ),
@@ -457,6 +513,38 @@ class _CoachesListPageState extends State<CoachesListPage> {
                                     }, childCount: _coaches.length),
                                   ),
                                 ),
+                              // Loading More Indicator
+                              if (_isLoadingMore)
+                                SliverToBoxAdapter(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              // End of List Indicator
+                              if (!_isInitialLoading &&
+                                  _coaches.isNotEmpty &&
+                                  _pagination != null &&
+                                  _pagination!['has_next'] != true)
+                                SliverToBoxAdapter(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Center(
+                                      child: Text(
+                                        'Semua coach telah ditampilkan',
+                                        style: TextStyle(
+                                          fontFamily: 'Quicksand',
+                                          color: AppColors.darkGrey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -510,31 +598,6 @@ class _CoachesListPageState extends State<CoachesListPage> {
               ),
             ),
           ),
-          // Fixed Pagination - outside the Expanded
-          if (_pagination != null)
-            PaginationControls(
-              currentPage: _pagination!['current_page'],
-              totalPages: _pagination!['total_pages'],
-              hasPrevious: _pagination!['has_previous'],
-              hasNext: _pagination!['has_next'],
-              isLoading: _isRefreshing || _isInitialLoading,
-              onPrevious: () {
-                if (_pagination!['has_previous']) {
-                  setState(() {
-                    _currentPage--;
-                  });
-                  _loadCoaches(isRefresh: true);
-                }
-              },
-              onNext: () {
-                if (_pagination!['has_next']) {
-                  setState(() {
-                    _currentPage++;
-                  });
-                  _loadCoaches(isRefresh: true);
-                }
-              },
-            ),
         ],
       ),
     );
@@ -646,56 +709,58 @@ class _CoachesListPageState extends State<CoachesListPage> {
                     ),
                     const SizedBox(height: 4),
                     if (coach.expertise.isNotEmpty)
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: [
-                          ...coach.expertise
-                              .take(3)
-                              .map(
-                                (exp) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryGreen.withOpacity(
-                                      0.1,
+                      Flexible(
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 2,
+                          children: [
+                            ...coach.expertise
+                                .take(2)
+                                .map(
+                                  (exp) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
                                     ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    exp,
-                                    style: TextStyle(
-                                      fontFamily: 'Quicksand',
-                                      fontSize: 9,
-                                      color: AppColors.primaryGreen,
-                                      fontWeight: FontWeight.w600,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryGreen.withOpacity(
+                                        0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      exp,
+                                      style: TextStyle(
+                                        fontFamily: 'Quicksand',
+                                        fontSize: 9,
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          if (coach.expertise.length > 3)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.darkGrey.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '+${coach.expertise.length - 3}',
-                                style: TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontSize: 9,
-                                  color: AppColors.darkGrey,
-                                  fontWeight: FontWeight.w600,
+                            if (coach.expertise.length > 2)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkGrey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '+${coach.expertise.length - 2}',
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontSize: 9,
+                                    color: AppColors.darkGrey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     const Spacer(),
                     Row(
@@ -746,6 +811,8 @@ class _CoachesListPageState extends State<CoachesListPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 }

@@ -318,19 +318,35 @@ class _PaymentMethodSelectionPageState
         ),
         child: Row(
           children: [
-            // Icon placeholder
+            // Logo image or icon
             Container(
-              width: 40,
+              width: 50,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Icon(
-                _getPaymentIcon(method.category),
-                color: AppColors.primaryGreen,
-                size: 24,
-              ),
+              child: method.logoUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.network(
+                        method.logoUrl!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            _getPaymentIcon(method.category),
+                            color: AppColors.primaryGreen,
+                            size: 24,
+                          );
+                        },
+                      ),
+                    )
+                  : Icon(
+                      _getPaymentIcon(method.category),
+                      color: AppColors.primaryGreen,
+                      size: 24,
+                    ),
             ),
             const SizedBox(width: 16),
             // Method name

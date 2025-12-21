@@ -122,45 +122,6 @@ class AdminSettingsScreen extends StatelessWidget {
                   subtitle: 'Perbarui kata sandi',
                   onTap: () => _showChangePasswordDialog(context),
                 ),
-                _SettingsItem(
-                  icon: Icons.security_outlined,
-                  title: 'Keamanan',
-                  subtitle: 'Two-factor authentication',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            _SettingsSection(
-              title: 'Aplikasi',
-              items: [
-                _SettingsItem(
-                  icon: Icons.notifications_outlined,
-                  title: 'Notifikasi',
-                  subtitle: 'Kelola preferensi notifikasi',
-                  trailing: Switch(
-                    value: true,
-                    onChanged: (value) {},
-                    activeColor: AppColors.primary,
-                  ),
-                ),
-                _SettingsItem(
-                  icon: Icons.language_outlined,
-                  title: 'Bahasa',
-                  subtitle: 'Indonesia',
-                  onTap: () {},
-                ),
-                _SettingsItem(
-                  icon: Icons.dark_mode_outlined,
-                  title: 'Mode Gelap',
-                  subtitle: 'Tampilan aplikasi',
-                  trailing: Switch(
-                    value: false,
-                    onChanged: (value) {},
-                    activeColor: AppColors.primary,
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -169,22 +130,10 @@ class AdminSettingsScreen extends StatelessWidget {
               title: 'Lainnya',
               items: [
                 _SettingsItem(
-                  icon: Icons.help_outline_rounded,
-                  title: 'Bantuan',
-                  subtitle: 'FAQ dan dukungan',
-                  onTap: () {},
-                ),
-                _SettingsItem(
                   icon: Icons.info_outline_rounded,
                   title: 'Tentang Aplikasi',
                   subtitle: 'Versi 1.0.0',
                   onTap: () => _showAboutDialog(context),
-                ),
-                _SettingsItem(
-                  icon: Icons.description_outlined,
-                  title: 'Syarat & Ketentuan',
-                  subtitle: 'Kebijakan privasi',
-                  onTap: () {},
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/admin_provider.dart';
 import 'admin_dashboard_screen.dart';
+import 'admin_payments_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_coaches_screen.dart';
 import 'admin_settings_screen.dart';
@@ -13,10 +14,10 @@ class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
 
   @override
-  State<AdminMainScreen> createState() => _AdminMainScreenState();
+  State<AdminMainScreen> createState() => AdminMainScreenState();
 }
 
-class _AdminMainScreenState extends State<AdminMainScreen> {
+class AdminMainScreenState extends State<AdminMainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
@@ -37,6 +38,11 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  // Public method to allow navigation from other widgets
+  void changeTab(int index) {
+    _onTabTapped(index);
   }
 
   Future<void> _handleLogout() async {

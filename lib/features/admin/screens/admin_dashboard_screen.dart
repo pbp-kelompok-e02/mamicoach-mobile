@@ -6,6 +6,8 @@ import '../../../core/constants/app_colors.dart';
 
 import '../providers/admin_provider.dart';
 import '../models/dashboard_stats.dart';
+import 'admin_main_screen.dart';
+import 'admin_payments_screen.dart';
 
 /// Admin Dashboard Screen for MamiCoach Admin Panel
 class AdminDashboardScreen extends StatefulWidget {
@@ -121,27 +123,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
           ],
-        ),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Badge(
-            label: const Text('3'),
-            child: Icon(
-              Icons.notifications_outlined,
-              color: AppColors.textSecondary,
-            ),
-          ),
         ),
       ],
     );
@@ -500,22 +481,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             Expanded(
               child: _QuickActionButton(
-                icon: Icons.person_add_outlined,
-                label: 'Verifikasi Coach',
-                color: AppColors.chartBlue,
-                onTap: () {
-                  // Navigate to coach verification
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
                 icon: Icons.payment_outlined,
                 label: 'Pembayaran',
                 color: AppColors.chartGreen,
                 onTap: () {
-                  // Navigate to payments
+                  // Navigate directly to payments screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminPaymentsScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -526,7 +502,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 label: 'Pengaturan',
                 color: AppColors.chartPurple,
                 onTap: () {
-                  // Navigate to settings
+                  // Navigate to settings tab
+                  final mainScreenState = context.findAncestorStateOfType<AdminMainScreenState>();
+                  mainScreenState?.changeTab(3); // Navigate to Settings tab
                 },
               ),
             ),
@@ -537,71 +515,158 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildRecentActivity() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Aktivitas Terbaru',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+    return Consumer<DashboardProvider>(
+      builder: (context, provider, _) {
+        final stats = provider.stats ?? DashboardStats.empty();
+        final activities = _buildActivityList(stats);
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              TextButton(onPressed: () {}, child: const Text('Lihat Semua')),
             ],
           ),
-          const SizedBox(height: 16),
-          _ActivityItem(
-            icon: Icons.person_add_outlined,
-            title: 'Pengguna baru mendaftar',
-            subtitle: 'Sarah Putri bergabung',
-            time: '5 menit lalu',
-            color: AppColors.chartBlue,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Aktivitas Terbaru',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text('Lihat Semua'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              activities.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                          'Tidak ada aktivitas terbaru',
+                          style: TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: activities.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final activity = entry.value;
+                        return Column(
+                          children: [
+                            if (index > 0) const Divider(height: 24),
+                            activity,
+                          ],
+                        );
+                      }).toList(),
+                    ),
+            ],
           ),
-          const Divider(height: 24),
-          _ActivityItem(
-            icon: Icons.verified_outlined,
-            title: 'Coach terverifikasi',
-            subtitle: 'Dr. Ahmad telah diverifikasi',
-            time: '1 jam lalu',
-            color: AppColors.success,
-          ),
-          const Divider(height: 24),
-          _ActivityItem(
-            icon: Icons.payment_outlined,
-            title: 'Pembayaran berhasil',
-            subtitle: 'Booking #1234 telah dibayar',
-            time: '2 jam lalu',
-            color: AppColors.chartGreen,
-          ),
-          const Divider(height: 24),
-          _ActivityItem(
-            icon: Icons.star_outline_rounded,
-            title: 'Review baru',
-            subtitle: 'Rating 5 untuk Yoga Class',
-            time: '3 jam lalu',
-            color: AppColors.chartYellow,
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  List<Widget> _buildActivityList(DashboardStats stats) {
+    final List<_ActivityData> activities = [];
+
+    try {
+      // Add recent bookings
+      debugPrint('[DASHBOARD] 📋 Processing ${stats.recentBookings.length} recent bookings');
+      for (var booking in stats.recentBookings.take(2)) {
+        try {
+          // user and course are strings, not maps
+          final user = booking['user']?.toString() ?? 'User';
+          final course = booking['course']?.toString() ?? 'Course';
+          final status = booking['status']?.toString() ?? 'pending';
+          final createdAt = DateTime.tryParse(booking['created_at']?.toString() ?? '');
+
+          activities.add(_ActivityData(
+            icon: Icons.calendar_today_outlined,
+            title: 'Booking baru',
+            subtitle: '$user - $course',
+            time: _formatTimeAgo(createdAt),
+            color: status == 'paid' ? AppColors.success : AppColors.chartOrange,
+            timestamp: createdAt ?? DateTime.now(),
+          ));
+        } catch (e) {
+          debugPrint('[DASHBOARD] Error parsing booking: $e');
+        }
+      }
+
+      // Add recent payments
+      for (var payment in stats.recentPayments.take(2)) {
+        try {
+          final orderId = payment['order_id']?.toString() ?? 'N/A';
+          final amount = payment['amount'] is num ? payment['amount'] : 0;
+          final status = payment['status']?.toString() ?? 'pending';
+          final createdAt = DateTime.tryParse(payment['created_at']?.toString() ?? '');
+
+          activities.add(_ActivityData(
+            icon: Icons.payment_outlined,
+            title: 'Pembayaran ${status == 'settlement' ? 'berhasil' : 'pending'}',
+            subtitle: 'Order #$orderId - ${_formatCurrency(amount.toDouble())}',
+            time: _formatTimeAgo(createdAt),
+            color: status == 'settlement' ? AppColors.chartGreen : AppColors.chartYellow,
+            timestamp: createdAt ?? DateTime.now(),
+          ));
+        } catch (e) {
+          debugPrint('[DASHBOARD] Error parsing payment: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('[DASHBOARD] Error building activity list: $e');
+    }
+
+    // Sort by timestamp (most recent first)
+    activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    // Take top 4 activities
+    return activities.take(4).map((data) {
+      return _ActivityItem(
+        icon: data.icon,
+        title: data.title,
+        subtitle: data.subtitle,
+        time: data.time,
+        color: data.color,
+      );
+    }).toList();
+  }
+
+  String _formatTimeAgo(DateTime? dateTime) {
+    if (dateTime == null) return 'Baru saja';
+
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} hari lalu';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} jam lalu';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} menit lalu';
+    } else {
+      return 'Baru saja';
+    }
   }
 }
 
@@ -625,7 +690,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
@@ -642,41 +707,48 @@ class _StatCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textTertiary,
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textTertiary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -853,4 +925,23 @@ class _ActivityItem extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Helper class to store activity data with timestamp for sorting
+class _ActivityData {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String time;
+  final Color color;
+  final DateTime timestamp;
+
+  _ActivityData({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    required this.color,
+    required this.timestamp,
+  });
 }
