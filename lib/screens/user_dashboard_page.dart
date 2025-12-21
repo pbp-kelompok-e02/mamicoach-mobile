@@ -177,26 +177,32 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-                child: imageUrl == null 
-                  ? const Icon(Icons.person, color: Colors.white, size: 28) 
-                  : null,
-              ),
-              const SizedBox(width: 16),
-              Text(
-                fullName,
-                style: const TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+          Expanded(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.grey[300],
+                  backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                  child: imageUrl == null 
+                    ? const Icon(Icons.person, color: Colors.white, size: 28) 
+                    : null,
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    fullName,
+                    style: const TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -279,130 +285,141 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Icon(Icons.description_outlined, color: Colors.grey),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    text: booking.courseTitle,
-                    style: const TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.black,
-                      fontSize: 14,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: ' with ${booking.coachName}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.grey[600],
+          // Top row with icon and text only
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(Icons.description_outlined, color: Colors.grey),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        text: booking.courseTitle,
+                        style: const TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.black,
+                          fontSize: 14,
                         ),
+                        children: [
+                          TextSpan(
+                            text: ' with ${booking.coachName}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      displayDate,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Bottom section with status badge or action buttons
+          if (isPending || isCancelled || isProcess || isCompleted || isUnpaid) ...[
+            const SizedBox(height: 12),
+            if (isPending)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Waiting for Coach Confirmation',
+                  style: TextStyle(color: AppColors.primaryGreen, fontSize: 12),
+                ),
+              ),
+            if (isCancelled)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text('Cancelled', style: TextStyle(color: Colors.red, fontSize: 12)),
+              ),
+            if (isProcess)
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: () => _openChat(booking),
+                  icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                  label: const Text('Chat'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryGreen,
+                    side: const BorderSide(color: AppColors.primaryGreen),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  displayDate,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              ),
+            if (isCompleted)
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () => _openReviewForBooking(booking),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
+                  child: const Text('Review', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-              ],
-            ),
-          ),
-          if (isProcess)
-             OutlinedButton.icon(
-                onPressed: () => _openChat(booking),
-                icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                label: const Text('Chat'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryGreen,
-                  side: const BorderSide(color: AppColors.primaryGreen),
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-             ),
-          if (isCancelled)
-             Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-               decoration: BoxDecoration(
-                 color: Colors.red[50],
-                 borderRadius: BorderRadius.circular(4),
-               ),
-               child: const Text('Cancelled', style: TextStyle(color: Colors.red, fontSize: 12)),
-             ),
-          if (isPending)
-            Container(
-               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-               decoration: BoxDecoration(
-                 color: const Color(0xFFD1FAE5), // Light green background
-                 borderRadius: BorderRadius.circular(4),
-               ),
-               child: const Text(
-                 'Waiting for Coach Confirmation', 
-                 style: TextStyle(color: AppColors.primaryGreen, fontSize: 12),
-               ),
-             ),
-          if (isCompleted)
-             ElevatedButton(
-                onPressed: () => _openReviewForBooking(booking),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  minimumSize: const Size(0, 36), // Reduce height slightly
-                ),
-                child: const Text('Review', style: TextStyle(fontWeight: FontWeight.bold)),
-             ),
-          if (isUnpaid)
-             Expanded(
-               child: Row(
-               mainAxisAlignment: MainAxisAlignment.end,
-               children: [
-                 ElevatedButton(
-                   onPressed: () => _navigateToPayment(booking),
-                   style: ElevatedButton.styleFrom(
-                     backgroundColor: Colors.orange,
-                     foregroundColor: Colors.white,
-                     visualDensity: VisualDensity.compact,
-                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                     minimumSize: const Size(0, 36),
-                   ),
-                   child: const Text('Pay Now', style: TextStyle(fontWeight: FontWeight.bold)),
-                 ),
-                 const SizedBox(width: 8),
-                 ElevatedButton(
-                   onPressed: () => _cancelBooking(booking),
-                   style: ElevatedButton.styleFrom(
-                     backgroundColor: Colors.red,
-                     foregroundColor: Colors.white,
-                     visualDensity: VisualDensity.compact,
-                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                     minimumSize: const Size(0, 36),
-                   ),
-                   child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
-                 ),
-               ],
-             ),
-             ),
+              ),
+            if (isUnpaid)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _navigateToPayment(booking),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: const Text('Pay Now', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _cancelBooking(booking),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+          ],
         ],
       ),
     );

@@ -6,6 +6,8 @@ import '../../../core/constants/app_colors.dart';
 
 import '../providers/admin_provider.dart';
 import '../models/dashboard_stats.dart';
+import 'admin_main_screen.dart';
+import 'admin_payments_screen.dart';
 
 /// Admin Dashboard Screen for MamiCoach Admin Panel
 class AdminDashboardScreen extends StatefulWidget {
@@ -121,27 +123,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
           ],
-        ),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Badge(
-            label: const Text('3'),
-            child: Icon(
-              Icons.notifications_outlined,
-              color: AppColors.textSecondary,
-            ),
-          ),
         ),
       ],
     );
@@ -500,22 +481,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             Expanded(
               child: _QuickActionButton(
-                icon: Icons.person_add_outlined,
-                label: 'Verifikasi Coach',
-                color: AppColors.chartBlue,
-                onTap: () {
-                  // Navigate to coach verification
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionButton(
                 icon: Icons.payment_outlined,
                 label: 'Pembayaran',
                 color: AppColors.chartGreen,
                 onTap: () {
-                  // Navigate to payments
+                  // Navigate directly to payments screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminPaymentsScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -526,7 +502,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 label: 'Pengaturan',
                 color: AppColors.chartPurple,
                 onTap: () {
-                  // Navigate to settings
+                  // Navigate to settings tab
+                  final mainScreenState = context.findAncestorStateOfType<AdminMainScreenState>();
+                  mainScreenState?.changeTab(3); // Navigate to Settings tab
                 },
               ),
             ),
@@ -613,17 +591,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     try {
       // Add recent bookings
+      debugPrint('[DASHBOARD] 📋 Processing ${stats.recentBookings.length} recent bookings');
       for (var booking in stats.recentBookings.take(2)) {
         try {
-          final user = booking['user'] is Map ? booking['user'] as Map : {};
-          final course = booking['course'] is Map ? booking['course'] as Map : {};
+          // user and course are strings, not maps
+          final user = booking['user']?.toString() ?? 'User';
+          final course = booking['course']?.toString() ?? 'Course';
           final status = booking['status']?.toString() ?? 'pending';
           final createdAt = DateTime.tryParse(booking['created_at']?.toString() ?? '');
 
           activities.add(_ActivityData(
             icon: Icons.calendar_today_outlined,
             title: 'Booking baru',
-            subtitle: '${user['username'] ?? 'User'} - ${course['title'] ?? 'Course'}',
+            subtitle: '$user - $course',
             time: _formatTimeAgo(createdAt),
             color: status == 'paid' ? AppColors.success : AppColors.chartOrange,
             timestamp: createdAt ?? DateTime.now(),
@@ -710,7 +690,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
@@ -727,41 +707,48 @@ class _StatCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textTertiary,
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textTertiary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

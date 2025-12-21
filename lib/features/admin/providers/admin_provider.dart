@@ -152,6 +152,16 @@ class DashboardProvider extends ChangeNotifier {
       final response = await _apiService.getDashboardStats();
 
       if (response['status'] == true) {
+        debugPrint('[ADMIN PROVIDER] 📦 Raw response data: ${response['data']}');
+        
+        // Log recent bookings structure
+        if (response['data']['recent_bookings'] != null) {
+          debugPrint('[ADMIN PROVIDER] 📋 Recent bookings count: ${response['data']['recent_bookings'].length}');
+          if (response['data']['recent_bookings'].isNotEmpty) {
+            debugPrint('[ADMIN PROVIDER] 📋 First booking structure: ${response['data']['recent_bookings'][0]}');
+          }
+        }
+        
         _stats = DashboardStats.fromApiResponse(response['data']);
         debugPrint('[ADMIN PROVIDER] ✅ Dashboard stats loaded from API');
       } else {
