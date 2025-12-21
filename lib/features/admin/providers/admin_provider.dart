@@ -143,6 +143,7 @@ class DashboardProvider extends ChangeNotifier {
 
   /// Fetch dashboard statistics from API
   Future<void> fetchDashboardStats() async {
+    debugPrint('[ADMIN PROVIDER] 🔄 Starting dashboard stats fetch...');
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -152,20 +153,25 @@ class DashboardProvider extends ChangeNotifier {
 
       if (response['status'] == true) {
         _stats = DashboardStats.fromApiResponse(response['data']);
+        debugPrint('[ADMIN PROVIDER] ✅ Dashboard stats loaded from API');
       } else {
         _error = response['message'];
+        debugPrint('[ADMIN PROVIDER] ⚠️ API returned error: $_error');
+        debugPrint('[ADMIN PROVIDER] 📊 Using mock dashboard data');
         // Use mock data when API fails
         _stats = _getMockDashboardStats();
       }
     } catch (e) {
-      debugPrint('Error fetching dashboard stats: $e');
+      debugPrint('[ADMIN PROVIDER] ❌ Error fetching dashboard stats: $e');
       _error = e.toString();
+      debugPrint('[ADMIN PROVIDER] 📊 Using mock dashboard data');
       // Use mock data when API fails
       _stats = _getMockDashboardStats();
     }
 
     _isLoading = false;
     notifyListeners();
+    debugPrint('[ADMIN PROVIDER] ✔️ Dashboard stats fetch completed');
   }
 
   /// Get mock dashboard stats for demo
@@ -203,6 +209,8 @@ class DashboardProvider extends ChangeNotifier {
         CategoryStats(name: 'Nutrisi', count: 25, percentage: 16),
         CategoryStats(name: 'Lainnya', count: 16, percentage: 12),
       ],
+      recentBookings: [],
+      recentPayments: [],
     );
   }
 

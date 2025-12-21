@@ -16,6 +16,7 @@ class AdminCoachesScreen extends StatefulWidget {
 
 class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   String _selectedFilter = 'all';
   final List<Map<String, String>> _filters = [
     {'label': 'Semua', 'value': 'all'},
@@ -30,12 +31,21 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CoachProvider>().fetchCoaches();
     });
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent * 0.9) {
+      context.read<CoachProvider>().loadMore();
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -105,9 +115,19 @@ class _AdminCoachesScreenState extends State<AdminCoachesScreen> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: provider.coaches.length,
+                    itemCount: provider.coaches.length + (provider.hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == provider.coaches.length) {
+                        // Loading indicator at the end
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
                       final coach = provider.coaches[index];
                       return _buildCoachCard(coach);
                     },
