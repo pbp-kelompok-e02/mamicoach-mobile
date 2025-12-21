@@ -127,12 +127,14 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Full-width Home Banner
               _buildHeroSection(context),
               const SizedBox(height: 24),
               _buildStatsSection(),
               const SizedBox(height: 32),
               _buildCategoriesSection(),
               const SizedBox(height: 32),
+              _buildHomeBanner(),
               _buildFeaturedCoursesSection(),
               const SizedBox(height: 32),
               _buildFeaturedCoachesSection(),
@@ -167,6 +169,26 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHomeBanner() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        'assets/images/home_banner.png',
+        width: double.infinity,
+        fit: BoxFit.cover,
       ),
     );
   }
