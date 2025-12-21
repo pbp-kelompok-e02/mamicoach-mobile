@@ -12,7 +12,6 @@ import 'package:mamicoach_mobile/core/widgets/proxy_network_image.dart';
 import 'package:mamicoach_mobile/widgets/sequence_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
 
 class CategoryDetailPage extends StatefulWidget {
   final CategoryModel category;
@@ -26,6 +25,8 @@ class CategoryDetailPage extends StatefulWidget {
 class _CategoryDetailPageState extends State<CategoryDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _courseScrollController = ScrollController();
+  final ScrollController _coachScrollController = ScrollController();
   int _coursePage = 1;
   int _coachPage = 1;
   late int _courseCount;
@@ -33,11 +34,13 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   List<Course> _courses = [];
   Map<String, dynamic>? _coursesPagination;
   bool _coursesLoading = true;
+  bool _coursesLoadingMore = false;
   String? _coursesError;
 
   List<Coach> _coaches = [];
   Map<String, dynamic>? _coachesPagination;
   bool _coachesLoading = true;
+  bool _coachesLoadingMore = false;
   String? _coachesError;
 
   @override
@@ -45,6 +48,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     super.initState();
     _courseCount = widget.category.courseCount;
     _tabController = TabController(length: 2, vsync: this);
+    _courseScrollController.addListener(_onCourseScroll);
+    _coachScrollController.addListener(_onCoachScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCourses();
       _loadCoaches();
@@ -54,14 +59,60 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _courseScrollController.removeListener(_onCourseScroll);
+    _courseScrollController.dispose();
+    _coachScrollController.removeListener(_onCoachScroll);
+    _coachScrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadCourses() async {
-    setState(() {
-      _coursesLoading = true;
-      _coursesError = null;
-    });
+  void _onCourseScroll() {
+    if (_coursesLoadingMore || _coursesLoading) return;
+    if (_courseScrollController.position.pixels >=
+        _courseScrollController.position.maxScrollExtent - 200) {
+      _loadMoreCourses();
+    }
+  }
+
+  void _onCoachScroll() {
+    if (_coachesLoadingMore || _coachesLoading) return;
+    if (_coachScrollController.position.pixels >=
+        _coachScrollController.position.maxScrollExtent - 200) {
+      _loadMoreCoaches();
+    }
+  }
+
+  Future<void> _loadMoreCourses() async {
+    if (_coursesLoadingMore || _coursesLoading) return;
+    if (_coursesPagination == null || _coursesPagination!['has_next'] != true)
+      return;
+
+    _coursesLoadingMore = true;
+    setState(() {});
+
+    _coursePage++;
+    await _loadCourses(isLoadMore: true);
+  }
+
+  Future<void> _loadMoreCoaches() async {
+    if (_coachesLoadingMore || _coachesLoading) return;
+    if (_coachesPagination == null || _coachesPagination!['has_next'] != true)
+      return;
+
+    _coachesLoadingMore = true;
+    setState(() {});
+
+    _coachPage++;
+    await _loadCoaches(isLoadMore: true);
+  }
+
+  Future<void> _loadCourses({bool isLoadMore = false}) async {
+    if (!isLoadMore) {
+      setState(() {
+        _coursesLoading = true;
+        _coursesError = null;
+      });
+    }
 
     final request = context.read<CookieRequest>();
     try {
@@ -76,24 +127,31 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         }
         if (mounted) {
           setState(() {
-            _courses = courses;
+            if (isLoadMore) {
+              final existingIds = _courses.map((c) => c.id).toSet();
+              final newCourses = courses
+                  .where((c) => !existingIds.contains(c.id))
+                  .toList();
+              _courses.addAll(newCourses);
+            } else {
+              _courses = courses;
+            }
             _coursesPagination = response['pagination'];
-            // Update course count from pagination total if available
             final paginationCount = response['pagination']?['total_count'];
             if (paginationCount != null && (paginationCount as int) > 0) {
               _courseCount = paginationCount;
             } else if (_courses.isNotEmpty) {
-              // Fallback: If API count is 0/null but we have items, use item count
-              // This ensures we never show "0" when items are visible.
               _courseCount = _courses.length;
             }
             _coursesLoading = false;
+            _coursesLoadingMore = false;
           });
         }
       } else {
         if (mounted) {
           setState(() {
             _coursesLoading = false;
+            _coursesLoadingMore = false;
           });
         }
       }
@@ -101,17 +159,20 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       if (mounted) {
         setState(() {
           _coursesLoading = false;
+          _coursesLoadingMore = false;
           _coursesError = e.toString().replaceAll('Exception: ', '');
         });
       }
     }
   }
 
-  Future<void> _loadCoaches() async {
-    setState(() {
-      _coachesLoading = true;
-      _coachesError = null;
-    });
+  Future<void> _loadCoaches({bool isLoadMore = false}) async {
+    if (!isLoadMore) {
+      setState(() {
+        _coachesLoading = true;
+        _coachesError = null;
+      });
+    }
 
     final request = context.read<CookieRequest>();
     try {
@@ -126,15 +187,25 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         }
         if (mounted) {
           setState(() {
-            _coaches = coaches;
+            if (isLoadMore) {
+              final existingIds = _coaches.map((c) => c.id).toSet();
+              final newCoaches = coaches
+                  .where((c) => !existingIds.contains(c.id))
+                  .toList();
+              _coaches.addAll(newCoaches);
+            } else {
+              _coaches = coaches;
+            }
             _coachesPagination = response['pagination'];
             _coachesLoading = false;
+            _coachesLoadingMore = false;
           });
         }
       } else {
         if (mounted) {
           setState(() {
             _coachesLoading = false;
+            _coachesLoadingMore = false;
           });
         }
       }
@@ -142,6 +213,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       if (mounted) {
         setState(() {
           _coachesLoading = false;
+          _coachesLoadingMore = false;
           _coachesError = e.toString().replaceAll('Exception: ', '');
         });
       }
@@ -259,200 +331,182 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           controller: _tabController,
           children: [
             // Courses Tab
-            Column(
-              children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      setState(() {
-                        _coursePage = 1;
-                      });
-                      await _loadCourses();
-                    },
-                    child: _coursesLoading
-                        ? ListView.builder(
+            RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _coursePage = 1;
+                  _courses = [];
+                });
+                await _loadCourses();
+              },
+              child: _coursesLoading
+                  ? ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 3,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: ShimmerPlaceholder(
+                          width: double.infinity,
+                          height: 200,
+                        ),
+                      ),
+                    )
+                  : _coursesError != null
+                  ? Center(child: Text(_coursesError!))
+                  : _courses.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.school_outlined,
+                            size: 64,
+                            color: AppColors.darkGrey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Belum ada kelas untuk kategori ini',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 16,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _courseScrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount:
+                          _courses.length +
+                          (_coursesLoadingMore ? 1 : 0) +
+                          (_coursesPagination != null &&
+                                  _coursesPagination!['has_next'] != true
+                              ? 1
+                              : 0),
+                      itemBuilder: (context, index) {
+                        if (index < _courses.length) {
+                          return _buildCourseCard(_courses[index]);
+                        } else if (_coursesLoadingMore) {
+                          return Container(
                             padding: const EdgeInsets.all(16),
-                            itemCount: 3,
-                            itemBuilder: (context, index) => const Padding(
-                              padding: EdgeInsets.only(bottom: 16),
-                              child: ShimmerPlaceholder(
-                                width: double.infinity,
-                                height: 200,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryGreen,
                               ),
                             ),
-                          )
-                        : _coursesError != null
-                        ? Center(child: Text(_coursesError!))
-                        : _courses.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.school_outlined,
-                                  size: 64,
-                                  color: AppColors.darkGrey,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Belum ada kelas untuk kategori ini',
-                                  style: TextStyle(
-                                    fontFamily: 'Quicksand',
-                                    fontSize: 16,
-                                    color: AppColors.darkGrey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
+                          );
+                        } else {
+                          return Container(
                             padding: const EdgeInsets.all(16),
-                            itemCount: _courses.length,
-                            itemBuilder: (context, index) {
-                              return _buildCourseCard(_courses[index]);
-                            },
-                          ),
-                  ),
-                ),
-                if (_coursesPagination != null)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
-                    child: PaginationControls(
-                      currentPage: _coursesPagination!['current_page'],
-                      totalPages: _coursesPagination!['total_pages'],
-                      hasPrevious: _coursesPagination!['has_previous'],
-                      hasNext: _coursesPagination!['has_next'],
-                      isLoading: _coursesLoading,
-                      onPrevious: () {
-                        if (_coursesPagination!['has_previous']) {
-                          setState(() {
-                            _coursePage--;
-                          });
-                          _loadCourses();
-                        }
-                      },
-                      onNext: () {
-                        if (_coursesPagination!['has_next']) {
-                          setState(() {
-                            _coursePage++;
-                          });
-                          _loadCourses();
+                            child: Center(
+                              child: Text(
+                                'Semua kelas telah ditampilkan',
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  color: AppColors.darkGrey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          );
                         }
                       },
                     ),
-                  ),
-              ],
             ),
 
             // Coaches Tab
-            Column(
-              children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      setState(() {
-                        _coachPage = 1;
-                      });
-                      await _loadCoaches();
-                    },
-                    child: _coachesLoading
-                        ? ListView.builder(
+            RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _coachPage = 1;
+                  _coaches = [];
+                });
+                await _loadCoaches();
+              },
+              child: _coachesLoading
+                  ? ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 3,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: ShimmerPlaceholder(
+                          width: double.infinity,
+                          height: 200,
+                        ),
+                      ),
+                    )
+                  : _coachesError != null
+                  ? Center(child: Text(_coachesError!))
+                  : _coaches.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_search,
+                            size: 64,
+                            color: AppColors.darkGrey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Belum ada coach untuk kategori ini',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 16,
+                              color: AppColors.darkGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      controller: _coachScrollController,
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 200,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.58,
+                          ),
+                      itemCount:
+                          _coaches.length +
+                          (_coachesLoadingMore ? 1 : 0) +
+                          (_coachesPagination != null &&
+                                  _coachesPagination!['has_next'] != true
+                              ? 1
+                              : 0),
+                      itemBuilder: (context, index) {
+                        if (index < _coaches.length) {
+                          return _buildCoachCard(_coaches[index]);
+                        } else if (_coachesLoadingMore) {
+                          return Container(
                             padding: const EdgeInsets.all(16),
-                            itemCount: 3,
-                            itemBuilder: (context, index) => const Padding(
-                              padding: EdgeInsets.only(bottom: 16),
-                              child: ShimmerPlaceholder(
-                                width: double.infinity,
-                                height: 200,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryGreen,
                               ),
                             ),
-                          )
-                        : _coachesError != null
-                        ? Center(child: Text(_coachesError!))
-                        : _coaches.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.person_search,
-                                  size: 64,
-                                  color: AppColors.darkGrey,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Belum ada coach untuk kategori ini',
-                                  style: TextStyle(
-                                    fontFamily: 'Quicksand',
-                                    fontSize: 16,
-                                    color: AppColors.darkGrey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : GridView.builder(
+                          );
+                        } else {
+                          return Container(
                             padding: const EdgeInsets.all(16),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 200,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 0.58,
+                            child: Center(
+                              child: Text(
+                                'Semua coach telah ditampilkan',
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  color: AppColors.darkGrey,
+                                  fontSize: 14,
                                 ),
-                            itemCount: _coaches.length,
-                            itemBuilder: (context, index) {
-                              return _buildCoachCard(_coaches[index]);
-                            },
-                          ),
-                  ),
-                ),
-                if (_coachesPagination != null)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
-                    child: PaginationControls(
-                      currentPage: _coachesPagination!['current_page'],
-                      totalPages: _coachesPagination!['total_pages'],
-                      hasPrevious: _coachesPagination!['has_previous'],
-                      hasNext: _coachesPagination!['has_next'],
-                      isLoading: _coachesLoading,
-                      onPrevious: () {
-                        if (_coachesPagination!['has_previous']) {
-                          setState(() {
-                            _coachPage--;
-                          });
-                          _loadCoaches();
-                        }
-                      },
-                      onNext: () {
-                        if (_coachesPagination!['has_next']) {
-                          setState(() {
-                            _coachPage++;
-                          });
-                          _loadCoaches();
+                              ),
+                            ),
+                          );
                         }
                       },
                     ),
-                  ),
-              ],
             ),
           ],
         ),

@@ -13,7 +13,6 @@ import 'package:mamicoach_mobile/widgets/common_error_widget.dart';
 import 'package:mamicoach_mobile/widgets/common_empty_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-import 'package:mamicoach_mobile/widgets/pagination_controls.dart';
 
 class ClassesPage extends StatefulWidget {
   final String? categoryFilter;
@@ -27,6 +26,7 @@ class ClassesPage extends StatefulWidget {
 
 class _ClassesPageState extends State<ClassesPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String? _selectedCategoryName;
   double? _minPrice;
   double? _maxPrice;
@@ -37,6 +37,7 @@ class _ClassesPageState extends State<ClassesPage> {
   List<Course> _courses = [];
   Map<String, dynamic>? _pagination;
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   String? _errorMessage;
   bool _isConnectionError = false;
 
@@ -47,12 +48,35 @@ class _ClassesPageState extends State<ClassesPage> {
     if (widget.searchQuery != null) {
       _searchController.text = widget.searchQuery!;
     }
+    _scrollController.addListener(_onScroll);
     _fetchCategories();
     _loadCourses();
   }
 
-  Future<void> _loadCourses({bool isRefresh = false}) async {
-    if (!isRefresh) {
+  void _onScroll() {
+    if (_isLoadingMore || _isLoading) return;
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreCourses();
+    }
+  }
+
+  Future<void> _loadMoreCourses() async {
+    if (_isLoadingMore || _isLoading) return;
+    if (_pagination == null || _pagination!['has_next'] != true) return;
+
+    _isLoadingMore = true;
+    setState(() {});
+
+    _currentPage++;
+    await _loadCourses(isLoadMore: true);
+  }
+
+  Future<void> _loadCourses({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!isRefresh && !isLoadMore) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
@@ -87,21 +111,33 @@ class _ClassesPageState extends State<ClassesPage> {
         }
         if (mounted) {
           setState(() {
-            _courses = courses;
+            if (isLoadMore) {
+              // Filter out duplicates by checking existing IDs
+              final existingIds = _courses.map((c) => c.id).toSet();
+              final newCourses = courses
+                  .where((c) => !existingIds.contains(c.id))
+                  .toList();
+              _courses.addAll(newCourses);
+            } else {
+              _courses = courses;
+            }
             _pagination = response['pagination'];
             _isLoading = false;
+            _isLoadingMore = false;
           });
         }
       } else {
         if (mounted)
           setState(() {
             _isLoading = false;
+            _isLoadingMore = false;
           });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isLoadingMore = false;
           _errorMessage = e.toString().replaceAll('Exception: ', '');
           _isConnectionError =
               e.toString().contains('SocketException') ||
@@ -138,6 +174,7 @@ class _ClassesPageState extends State<ClassesPage> {
       _minRating = null;
       _sortBy = '-rating';
       _currentPage = 1;
+      _courses = [];
     });
     _loadCourses();
   }
@@ -145,11 +182,19 @@ class _ClassesPageState extends State<ClassesPage> {
   void _applySearch() {
     setState(() {
       _currentPage = 1;
+      _courses = [];
     });
     _loadCourses();
   }
 
   void _showPriceFilter() {
+    final minPriceController = TextEditingController(
+      text: _minPrice != null ? _minPrice!.toInt().toString() : '',
+    );
+    final maxPriceController = TextEditingController(
+      text: _maxPrice != null ? _maxPrice!.toInt().toString() : '',
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -161,25 +206,21 @@ class _ClassesPageState extends State<ClassesPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: minPriceController,
               decoration: const InputDecoration(
                 labelText: 'Harga Minimum',
                 prefixText: 'Rp ',
               ),
               keyboardType: TextInputType.number,
-              onChanged: (value) {
-                _minPrice = double.tryParse(value);
-              },
             ),
             const SizedBox(height: 16),
             TextField(
+              controller: maxPriceController,
               decoration: const InputDecoration(
                 labelText: 'Harga Maksimum',
                 prefixText: 'Rp ',
               ),
               keyboardType: TextInputType.number,
-              onChanged: (value) {
-                _maxPrice = double.tryParse(value);
-              },
             ),
           ],
         ),
@@ -188,10 +229,26 @@ class _ClassesPageState extends State<ClassesPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _minPrice = null;
+                _maxPrice = null;
+                _currentPage = 1;
+                _courses = [];
+              });
+              Navigator.pop(context);
+              _loadCourses();
+            },
+            child: const Text('Hapus'),
+          ),
           ElevatedButton(
             onPressed: () {
               setState(() {
+                _minPrice = double.tryParse(minPriceController.text);
+                _maxPrice = double.tryParse(maxPriceController.text);
                 _currentPage = 1;
+                _courses = [];
               });
               Navigator.pop(context);
               _loadCourses();
@@ -213,9 +270,12 @@ class _ClassesPageState extends State<ClassesPage> {
               onRefresh: () async {
                 setState(() {
                   _currentPage = 1;
+                  _courses = [];
                 });
+                await _loadCourses();
               },
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   SliverToBoxAdapter(
                     child: Container(
@@ -376,6 +436,7 @@ class _ClassesPageState extends State<ClassesPage> {
                                         setState(() {
                                           _searchController.clear();
                                           _currentPage = 1;
+                                          _courses = [];
                                         });
                                         _loadCourses();
                                       },
@@ -455,7 +516,9 @@ class _ClassesPageState extends State<ClassesPage> {
                                           ? null
                                           : value;
                                       _currentPage = 1;
+                                      _courses = [];
                                     });
+                                    _loadCourses();
                                   },
                                   itemBuilder: (context) => [
                                     const PopupMenuItem<String>(
@@ -518,7 +581,9 @@ class _ClassesPageState extends State<ClassesPage> {
                                     setState(() {
                                       _minRating = value == 0.0 ? null : value;
                                       _currentPage = 1;
+                                      _courses = [];
                                     });
+                                    _loadCourses();
                                   },
                                   itemBuilder: (context) => const [
                                     PopupMenuItem<double>(
@@ -562,7 +627,9 @@ class _ClassesPageState extends State<ClassesPage> {
                                     setState(() {
                                       _sortBy = value;
                                       _currentPage = 1;
+                                      _courses = [];
                                     });
+                                    _loadCourses();
                                   },
                                   itemBuilder: (context) => const [
                                     PopupMenuItem(
@@ -645,47 +712,42 @@ class _ClassesPageState extends State<ClassesPage> {
                         }, childCount: _courses.length),
                       ),
                     ),
+                  // Loading More Indicator
+                  if (_isLoadingMore)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // End of List Indicator
+                  if (!_isLoading &&
+                      _courses.isNotEmpty &&
+                      _pagination != null &&
+                      _pagination!['has_next'] != true)
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(
+                          child: Text(
+                            'Semua kelas telah ditampilkan',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              color: AppColors.darkGrey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
-          // Fixed Pagination
-          if (_pagination != null)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: PaginationControls(
-                currentPage: _pagination!['current_page'],
-                totalPages: _pagination!['total_pages'],
-                hasPrevious: _pagination!['has_previous'],
-                hasNext: _pagination!['has_next'],
-                isLoading: _isLoading,
-                onPrevious: () {
-                  if (_pagination!['has_previous']) {
-                    setState(() {
-                      _currentPage--;
-                    });
-                    _loadCourses();
-                  }
-                },
-                onNext: () {
-                  if (_pagination!['has_next']) {
-                    setState(() {
-                      _currentPage++;
-                    });
-                    _loadCourses();
-                  }
-                },
-              ),
-            ),
         ],
       ),
     );
@@ -913,6 +975,8 @@ class _ClassesPageState extends State<ClassesPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 }
